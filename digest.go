@@ -8,11 +8,6 @@ import (
 	"strings"
 )
 
-const (
-	// DigestSha256EmptyTar is the canonical sha256 digest of empty data
-	DigestSha256EmptyTar = "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-)
-
 // Digest allows simple protection of hex formatted digest strings, prefixed
 // by their algorithm. Strings of type Digest have some guarantee of being in
 // the correct format and it provides quick access to the components of a
@@ -66,11 +61,6 @@ var (
 func Parse(s string) (Digest, error) {
 	d := Digest(s)
 	return d, d.Validate()
-}
-
-// ParseDigest is deprecated. Use Parse.
-func ParseDigest(s string) (Digest, error) {
-	return Parse(s)
 }
 
 // FromReader returns the most valid digest for the underlying content using
