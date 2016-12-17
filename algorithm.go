@@ -89,11 +89,6 @@ func (a Algorithm) Digester() Digester {
 	}
 }
 
-// New is deprecated. Use Algorithm.Digester.
-func (a Algorithm) New() Digester {
-	return a.Digester()
-}
-
 // Hash returns a new hash as used by the algorithm. If not available, the
 // method will panic. Check Algorithm.Available() before calling.
 func (a Algorithm) Hash() hash.Hash {
@@ -118,7 +113,7 @@ func (a Algorithm) Hash() hash.Hash {
 
 // FromReader returns the digest of the reader using the algorithm.
 func (a Algorithm) FromReader(rd io.Reader) (Digest, error) {
-	digester := a.New()
+	digester := a.Digester()
 
 	if _, err := io.Copy(digester.Hash(), rd); err != nil {
 		return "", err
@@ -129,7 +124,7 @@ func (a Algorithm) FromReader(rd io.Reader) (Digest, error) {
 
 // FromBytes digests the input and returns a Digest.
 func (a Algorithm) FromBytes(p []byte) Digest {
-	digester := a.New()
+	digester := a.Digester()
 
 	if _, err := digester.Hash().Write(p); err != nil {
 		// Writes to a Hash should never fail. None of the existing
