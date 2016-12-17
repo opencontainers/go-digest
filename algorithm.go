@@ -89,11 +89,6 @@ func (a Algorithm) Digester() Digester {
 	}
 }
 
-// New is deprecated. Use Algorithm.Digester.
-func (a Algorithm) New() Digester {
-	return a.Digester()
-}
-
 // Hash returns a new hash as used by the algorithm. If not available, the
 // method will panic. Check Algorithm.Available() before calling.
 func (a Algorithm) Hash() hash.Hash {

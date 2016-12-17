@@ -76,9 +76,6 @@ out when using this package.
 
 The Go API, at this stage, is considered stable, unless otherwise noted.
 
-Right now, only two methods are marked as "deprecated", which may be 
-removed before wider deployment.
-
 As always, before using a package export, read the [godoc](https://godoc.org/github.com/docker/go-digest).
 
 # Contributing
