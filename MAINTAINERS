@@ -11,9 +11,9 @@
 [Org]
 	[Org."Core maintainers"]
 		people = [
-      "aaronlehmann",
+			"aaronlehmann",
 			"dmcgowan",
-      "stevvooe"
+			"stevvooe"
 		]
 
 [people]
@@ -27,12 +27,12 @@
 	Name = "Aaron Lehmann"
 	Email = "aaron.lehmann@docker.com"
 	GitHub = "aaronlehmann"
-	
-  [people.dmcgowan]
+
+	[people.dmcgowan]
 	Name = "Derek McGowan"
 	Email = "derek@mcgstyle.net"
 	GitHub = "dmcgowan"
-  
+
 	[people.stevvooe]
 	Name = "Stephen J. Day"
 	Email = "stephen.day@docker.com"
