@@ -63,8 +63,7 @@ func Parse(s string) (Digest, error) {
 	return d, d.Validate()
 }
 
-// FromReader returns the most valid digest for the underlying content using
-// the canonical digest algorithm.
+// FromReader consumes the content of rd until io.EOF, returning canonical digest.
 func FromReader(rd io.Reader) (Digest, error) {
 	return Canonical.FromReader(rd)
 }
