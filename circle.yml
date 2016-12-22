@@ -1,0 +1,13 @@
+machine:
+  environment:
+    GOROOT: ~/go-1.7.4
+
+dependencies:
+  cache_directories:
+    - ~/go-1.7.4
+  pre:
+    - echo $PATH
+    - GOROOT= go version
+    - echo '47fda42e46b4c3ec93fa5d4d4cc6a748aa3f9411a2a2b7e08e3a6d80d753ec8b go1.7.4.linux-amd64.tar.gz' >go1.7.4.linux-amd64.tar.gz.hash
+    - test ! -d ~/go-1.7.4 && rm -rf ~/go-* && mkdir ~/go-1.7.4 && wget https://storage.googleapis.com/golang/go1.7.4.linux-amd64.tar.gz && sha256sum -c go1.7.4.linux-amd64.tar.gz.hash && tar -C ~/go-1.7.4 -xzf go1.7.4.linux-amd64.tar.gz --strip-components 1
+    - go version
