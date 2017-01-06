@@ -1,6 +1,6 @@
 # go-digest
 
-[![GoDoc](https://godoc.org/github.com/docker/go-digest?status.svg)](https://godoc.org/github.com/docker/go-digest) [![Go Report Card](https://goreportcard.com/badge/github.com/docker/go-digest)](https://goreportcard.com/report/github.com/docker/go-digest) [![Build Status](https://travis-ci.org/docker/go-digest.svg?branch=master)](https://travis-ci.org/docker/go-digest) [![CircleCI](https://circleci.com/gh/docker/go-digest.svg?style=svg)](https://circleci.com/gh/docker/go-digest)
+[![GoDoc](https://godoc.org/github.com/docker/go-digest?status.svg)](https://godoc.org/github.com/docker/go-digest) [![Go Report Card](https://goreportcard.com/badge/github.com/docker/go-digest)](https://goreportcard.com/report/github.com/docker/go-digest) [![Build Status](https://travis-ci.org/docker/go-digest.svg?branch=master)](https://travis-ci.org/docker/go-digest)
 
 Common digest package used across the container ecosystem.
 
