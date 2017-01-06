@@ -92,6 +92,6 @@ Guidelines for reporting security issues are [here][security].
 
 # Copyright and license
 
-Copyright © 2016 Docker, Inc. All rights reserved, except as follows. Code and the [`CONTRIBUTING.md`](CONTRIBUTING.md) file are released under the [Apache 2.0 license](LICENSE.code). This `README.md` file is  licensed under the Creative Commons Attribution 4.0 International License under the terms and conditions set forth in the file [`LICENSE.docs`](LICENSE.docs). You may obtain a duplicate copy of the same license, titled CC BY-SA 4.0, at http://creativecommons.org/licenses/by-sa/4.0/.
+Copyright © 2016 Docker, Inc. All rights reserved, except as follows. Code and the [`CONTRIBUTING.md`](CONTRIBUTING.md) file are released under the [Apache 2.0 license](LICENSE). This `README.md` file is  licensed under the Creative Commons Attribution 4.0 International License under the terms and conditions set forth in the file [`LICENSE.docs`](LICENSE.docs). You may obtain a duplicate copy of the same license, titled CC BY-SA 4.0, at http://creativecommons.org/licenses/by-sa/4.0/.
 
 [security]: CONTRIBUTING.md#security-issues
