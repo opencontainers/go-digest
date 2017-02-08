@@ -98,7 +98,7 @@ func TestParseDigest(t *testing.T) {
 			t.Fatalf("expected equal: %q != %q", newParsed, digest)
 		}
 
-		newFromHex := NewDigestFromHex(newParsed.Algorithm().String(), newParsed.Hex())
+		newFromHex := NewDigestFromHex(newParsed.Algorithm(), newParsed.Hex())
 		if newFromHex != digest {
 			t.Fatalf("%v != %v", newFromHex, digest)
 		}
