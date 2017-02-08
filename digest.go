@@ -49,7 +49,7 @@ func NewDigestFromBytes(alg Algorithm, p []byte) Digest {
 }
 
 // NewDigestFromHex returns a Digest from alg and a the hex encoded digest.
-func NewDigestFromHex(alg, hex string) Digest {
+func NewDigestFromHex(alg Algorithm, hex string) Digest {
 	return Digest(fmt.Sprintf("%s:%s", alg, hex))
 }
 
