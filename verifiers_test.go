@@ -12,22 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package digest
+package digest_test
 
 import (
 	"bytes"
 	"crypto/rand"
+	_ "crypto/sha256"
+	_ "crypto/sha512"
 	"io"
 	"reflect"
 	"testing"
+
+	"github.com/opencontainers/go-digest"
 )
 
 func TestDigestVerifier(t *testing.T) {
 	p := make([]byte, 1<<20)
 	rand.Read(p)
-	digest := FromBytes(p)
+	dgst := digest.FromBytes(p)
 
-	verifier := digest.Verifier()
+	verifier := dgst.Verifier()
 
 	io.Copy(verifier, bytes.NewReader(p))
 
@@ -41,7 +45,7 @@ func TestDigestVerifier(t *testing.T) {
 func TestVerifierUnsupportedDigest(t *testing.T) {
 	for _, testcase := range []struct {
 		Name     string
-		Digest   Digest
+		Digest   digest.Digest
 		Expected interface{} // expected panic target
 	}{
 		{
@@ -52,17 +56,17 @@ func TestVerifierUnsupportedDigest(t *testing.T) {
 		{
 			Name:     "EmptyAlg",
 			Digest:   ":",
-			Expected: "empty digest algorithm, validate before calling Algorithm.Hash()",
+			Expected: "empty digest algorithm for :",
 		},
 		{
 			Name:     "Unsupported",
-			Digest:   Digest("bean:0123456789abcdef"),
-			Expected: "bean not available (make sure it is imported)",
+			Digest:   digest.Digest("bean:0123456789abcdef"),
+			Expected: "unrecognized algorithm bean",
 		},
 		{
 			Name:     "Garbage",
-			Digest:   Digest("sha256-garbage:pure"),
-			Expected: "sha256-garbage not available (make sure it is imported)",
+			Digest:   digest.Digest("sha256-garbage:pure"),
+			Expected: "unrecognized algorithm sha256-garbage",
 		},
 	} {
 		t.Run(testcase.Name, func(t *testing.T) {

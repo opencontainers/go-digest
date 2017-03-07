@@ -15,7 +15,6 @@
 package digest
 
 import (
-	"hash"
 	"io"
 )
 
@@ -32,14 +31,14 @@ type Verifier interface {
 }
 
 type hashVerifier struct {
-	digest Digest
-	hash   hash.Hash
+	digest   Digest
+	digester Digester
 }
 
 func (hv hashVerifier) Write(p []byte) (n int, err error) {
-	return hv.hash.Write(p)
+	return hv.digester.Hash().Write(p)
 }
 
 func (hv hashVerifier) Verified() bool {
-	return hv.digest == NewDigest(hv.digest.Algorithm(), hv.hash)
+	return hv.digest == hv.digester.Digest()
 }

@@ -12,65 +12,67 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package digest
+package digest_test
 
 import (
 	"testing"
+
+	"github.com/opencontainers/go-digest"
 )
 
 func TestParseDigest(t *testing.T) {
 	for _, testcase := range []struct {
 		input     string
 		err       error
-		algorithm Algorithm
-		hex       string
+		algorithm digest.Algorithm
+		hash      string
 	}{
 		{
 			input:     "sha256:e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
-			algorithm: "sha256",
-			hex:       "e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
+			algorithm: digest.SHA256,
+			hash:      "e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
 		},
 		{
 			input:     "sha384:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
-			algorithm: "sha384",
-			hex:       "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			algorithm: digest.SHA384,
+			hash:      "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 		},
 		{
-			// empty hex
+			// empty hash
 			input: "sha256:",
-			err:   ErrDigestInvalidFormat,
+			err:   digest.ErrDigestInvalidFormat,
 		},
 		{
-			// empty hex
+			// empty hash
 			input: ":",
-			err:   ErrDigestInvalidFormat,
+			err:   digest.ErrDigestInvalidFormat,
 		},
 		{
-			// just hex
+			// just hash
 			input: "d41d8cd98f00b204e9800998ecf8427e",
-			err:   ErrDigestInvalidFormat,
+			err:   digest.ErrDigestInvalidFormat,
 		},
 		{
-			// not hex
+			// not hash
 			input: "sha256:d41d8cd98f00b204e9800m98ecf8427e",
-			err:   ErrDigestInvalidFormat,
+			err:   digest.ErrDigestInvalidFormat,
 		},
 		{
 			// too short
 			input: "sha256:abcdef0123456789",
-			err:   ErrDigestInvalidLength,
+			err:   digest.ErrDigestInvalidLength,
 		},
 		{
 			// too short (from different algorithm)
 			input: "sha512:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-			err:   ErrDigestInvalidLength,
+			err:   digest.ErrDigestInvalidLength,
 		},
 		{
 			input: "foo:d41d8cd98f00b204e9800998ecf8427e",
-			err:   ErrDigestUnsupported,
+			err:   digest.ErrDigestUnsupported,
 		},
 	} {
-		digest, err := Parse(testcase.input)
+		dgst, err := digest.Parse(testcase.input)
 		if err != testcase.err {
 			t.Fatalf("error differed from expected while parsing %q: %v != %v", testcase.input, err, testcase.err)
 		}
@@ -79,28 +81,28 @@ func TestParseDigest(t *testing.T) {
 			continue
 		}
 
-		if digest.Algorithm() != testcase.algorithm {
-			t.Fatalf("incorrect algorithm for parsed digest: %q != %q", digest.Algorithm(), testcase.algorithm)
+		if dgst.Algorithm() != testcase.algorithm {
+			t.Fatalf("incorrect algorithm for parsed digest: %q != %q", dgst.Algorithm(), testcase.algorithm)
 		}
 
-		if digest.Hex() != testcase.hex {
-			t.Fatalf("incorrect hex for parsed digest: %q != %q", digest.Hex(), testcase.hex)
+		if dgst.Hash() != testcase.hash {
+			t.Fatalf("incorrect hash for parsed digest: %q != %q", dgst.Hash(), testcase.hash)
 		}
 
 		// Parse string return value and check equality
-		newParsed, err := Parse(digest.String())
+		newParsed, err := digest.Parse(dgst.String())
 
 		if err != nil {
 			t.Fatalf("unexpected error parsing input %q: %v", testcase.input, err)
 		}
 
-		if newParsed != digest {
-			t.Fatalf("expected equal: %q != %q", newParsed, digest)
+		if newParsed != dgst {
+			t.Fatalf("expected equal: %q != %q", newParsed, dgst)
 		}
 
-		newFromHex := NewDigestFromHex(newParsed.Algorithm().String(), newParsed.Hex())
-		if newFromHex != digest {
-			t.Fatalf("%v != %v", newFromHex, digest)
+		newFromHash := digest.NewDigestFromHash(newParsed.Algorithm().String(), newParsed.Hash())
+		if newFromHash != dgst {
+			t.Fatalf("%v != %v", newFromHash, dgst)
 		}
 	}
 }
