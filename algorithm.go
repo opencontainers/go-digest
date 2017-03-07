@@ -21,16 +21,70 @@ import (
 	"io"
 )
 
-// Algorithm identifies and implementation of a digester by an identifier.
+type Algorithm interface {
+	// Available returns true if the digest type is available for use. If this
+	// returns false, Digester and Hash will return nil.
+	Available() bool
+
+	// String returns the canonical algorithm identifier for this algorithm.
+	String() string
+
+	// Size returns number of bytes in the raw (unencoded) hash.  This
+	// gives the size of the hash space. For SHA-256, this will be 32.
+	Size() int
+
+	// HashSize returns number of bytes in the encoded hash.  For
+	// algorithms which use a base b encoding, HashSize will Size() * 8 /
+	// log2(b), possibly rounded up depending on padding.
+	HashSize() int
+
+	// Encoding returns the algorithm's Encoding.
+	Encoding() Encoding
+
+	// Digester returns a new digester for the algorithm.
+	Digester() Digester
+
+	// Hash returns a new hash as used by the algorithm.
+	Hash() hash.Hash
+
+	// FromReader returns the digest of the reader using the algorithm.
+	FromReader(rd io.Reader) (Digest, error)
+
+	// FromBytes digests the input and returns a Digest.
+	FromBytes(p []byte) Digest
+
+	// FromString digests the string input and returns a Digest.
+	FromString(s string) Digest
+}
+
+// algorithm identifies and implementation of a digester by an identifier.
 // Note the that this defines both the hash algorithm used and the string
 // encoding.
-type Algorithm string
+type algorithm struct {
+	name     string
+	hash     crypto.Hash
+	encoding Encoding
+}
 
 // supported digest types
-const (
-	SHA256 Algorithm = "sha256" // sha256 with hex encoding
-	SHA384 Algorithm = "sha384" // sha384 with hex encoding
-	SHA512 Algorithm = "sha512" // sha512 with hex encoding
+var (
+	SHA256 = algorithm{
+		name:     "sha256",
+		hash:     crypto.SHA256,
+		encoding: Hex,
+	}
+
+	SHA384 = algorithm{
+		name:     "sha384",
+		hash:     crypto.SHA384,
+		encoding: Hex,
+	}
+
+	SHA512 = algorithm{
+		name:     "sha512",
+		hash:     crypto.SHA512,
+		encoding: Hex,
+	}
 
 	// Canonical is the primary digest algorithm used with the distribution
 	// project. Other digests may be used but this one is the primary storage
@@ -39,94 +93,73 @@ const (
 )
 
 var (
-	// TODO(stevvooe): Follow the pattern of the standard crypto package for
-	// registration of digests. Effectively, we are a registerable set and
-	// common symbol access.
-
-	// algorithms maps values to hash.Hash implementations. Other algorithms
-	// may be available but they cannot be calculated by the digest package.
-	algorithms = map[Algorithm]crypto.Hash{
-		SHA256: crypto.SHA256,
-		SHA384: crypto.SHA384,
-		SHA512: crypto.SHA512,
+	// Algorithms is a registerable set of Algorithm instances.
+	Algorithms = map[string]Algorithm{
+		"sha256": SHA256,
+		"sha384": SHA384,
+		"sha512": SHA512,
 	}
 )
 
-// Available returns true if the digest type is available for use. If this
-// returns false, Digester and Hash will return nil.
-func (a Algorithm) Available() bool {
-	h, ok := algorithms[a]
-	if !ok {
-		return false
-	}
-
+// Available returns true if the algorithm hash is available for
+// use. If this returns false, Digester and Hash will return nil.
+func (a algorithm) Available() bool {
 	// check availability of the hash, as well
-	return h.Available()
+	return a.hash.Available()
 }
 
-func (a Algorithm) String() string {
-	return string(a)
+func (a algorithm) String() string {
+	return a.name
 }
 
-// Size returns number of bytes returned by the hash.
-func (a Algorithm) Size() int {
-	h, ok := algorithms[a]
-	if !ok {
-		return 0
+// Size returns number of bytes in the raw (unencoded) hash.  This
+// gives the size of the hash space. For SHA-256, this will be 32.
+func (a algorithm) Size() int {
+	return a.hash.Size()
+}
+
+// HashSize returns number of bytes in the encoded hash.  For
+// algorithms which use a base b encoding, HashSize will Size() * 8 /
+// log2(b), possibly rounded up depending on padding.
+func (a algorithm) HashSize() int {
+	if a.encoding == Hex {
+		return 2 * a.Size()
 	}
-	return h.Size()
+	panic(fmt.Sprintf("unrecognized encoding %v", a.encoding))
 }
 
-// Set implemented to allow use of Algorithm as a command line flag.
-func (a *Algorithm) Set(value string) error {
-	if value == "" {
-		*a = Canonical
-	} else {
-		// just do a type conversion, support is queried with Available.
-		*a = Algorithm(value)
-	}
+// Encoding returns the algorithm's Encoding.
+func (a algorithm) Encoding() Encoding {
+	return a.encoding
+}
 
+// Digester returns a new digester for the algorithm. If the algorithm
+// is unavailable, nil will be returned. This can be checked by
+// calling Available before calling Digester.
+func (a algorithm) Digester() Digester {
 	if !a.Available() {
-		return ErrDigestUnsupported
+		return nil
 	}
 
-	return nil
-}
-
-// Digester returns a new digester for the specified algorithm. If the algorithm
-// does not have a digester implementation, nil will be returned. This can be
-// checked by calling Available before calling Digester.
-func (a Algorithm) Digester() Digester {
 	return &digester{
-		alg:  a,
-		hash: a.Hash(),
+		name:     a.name,
+		hash:     a.Hash(),
+		encoding: a.encoding,
 	}
 }
 
-// Hash returns a new hash as used by the algorithm. If not available, the
-// method will panic. Check Algorithm.Available() before calling.
-func (a Algorithm) Hash() hash.Hash {
+// Hash returns a new hash as used by the algorithm.  If the algorithm
+// is unavailable, nil will be returned.  This can be checked by
+// calling Available before calling Hash().
+func (a algorithm) Hash() hash.Hash {
 	if !a.Available() {
-		// Empty algorithm string is invalid
-		if a == "" {
-			panic(fmt.Sprintf("empty digest algorithm, validate before calling Algorithm.Hash()"))
-		}
-
-		// NOTE(stevvooe): A missing hash is usually a programming error that
-		// must be resolved at compile time. We don't import in the digest
-		// package to allow users to choose their hash implementation (such as
-		// when using stevvooe/resumable or a hardware accelerated package).
-		//
-		// Applications that may want to resolve the hash at runtime should
-		// call Algorithm.Available before call Algorithm.Hash().
-		panic(fmt.Sprintf("%v not available (make sure it is imported)", a))
+		return nil
 	}
-
-	return algorithms[a].New()
+	return a.hash.New()
 }
 
 // FromReader returns the digest of the reader using the algorithm.
-func (a Algorithm) FromReader(rd io.Reader) (Digest, error) {
+func (a algorithm) FromReader(rd io.Reader) (Digest, error) {
 	digester := a.Digester()
 
 	if _, err := io.Copy(digester.Hash(), rd); err != nil {
@@ -137,7 +170,7 @@ func (a Algorithm) FromReader(rd io.Reader) (Digest, error) {
 }
 
 // FromBytes digests the input and returns a Digest.
-func (a Algorithm) FromBytes(p []byte) Digest {
+func (a algorithm) FromBytes(p []byte) Digest {
 	digester := a.Digester()
 
 	if _, err := digester.Hash().Write(p); err != nil {
@@ -153,6 +186,6 @@ func (a Algorithm) FromBytes(p []byte) Digest {
 }
 
 // FromString digests the string input and returns a Digest.
-func (a Algorithm) FromString(s string) Digest {
+func (a algorithm) FromString(s string) Digest {
 	return a.FromBytes([]byte(s))
 }

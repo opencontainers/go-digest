@@ -23,14 +23,14 @@
 // The format of a digest is simply a string with two parts, dubbed the
 // "algorithm" and the "digest", separated by a colon:
 //
-// 	<algorithm>:<digest>
+// 	<algorithm>:<hash>
 //
 // An example of a sha256 digest representation follows:
 //
 // 	sha256:7173b809ca12ec5dee4506cd86be934c4596dd234ee82c0662eac04a8c2c71dc
 //
 // In this case, the string "sha256" is the algorithm and the hex bytes are
-// the "digest".
+// the hash.
 //
 // Because the Digest type is simply a string, once a valid Digest is
 // obtained, comparisons are cheap, quick and simple to express with the

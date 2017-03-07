@@ -22,9 +22,9 @@ import (
 	"strings"
 )
 
-// Digest allows simple protection of hex formatted digest strings, prefixed
-// by their algorithm. Strings of type Digest have some guarantee of being in
-// the correct format and it provides quick access to the components of a
+// Digest allows simple protection of algorithm-prefixed
+// hashes. Strings of type Digest have some guarantee of being in the
+// correct format and it provides quick access to the components of a
 // digest string.
 //
 // The following is an example of the contents of Digest types:
@@ -35,9 +35,9 @@ import (
 // terms.
 type Digest string
 
-// NewDigest returns a Digest from alg and a hash.Hash object.
+// NewDigest is deprecated.  Use NewDigester(...).Digest() instead.
 func NewDigest(alg Algorithm, h hash.Hash) Digest {
-	return NewDigestFromBytes(alg, h.Sum(nil))
+	return NewDigester(alg, h).Digest()
 }
 
 // NewDigestFromBytes returns a new digest from the byte contents of p.
@@ -45,12 +45,17 @@ func NewDigest(alg Algorithm, h hash.Hash) Digest {
 // functions. This is also useful for rebuilding digests from binary
 // serializations.
 func NewDigestFromBytes(alg Algorithm, p []byte) Digest {
-	return Digest(fmt.Sprintf("%s:%x", alg, p))
+	return NewDigestFromHash(alg.String(), alg.Encoding().EncodeToString(p))
 }
 
-// NewDigestFromHex returns a Digest from alg and a the hex encoded digest.
+// NewDigestFromHash returns a Digest from the algorithm and hash.
+func NewDigestFromHash(alg, hash string) Digest {
+	return Digest(fmt.Sprintf("%s:%s", alg, hash))
+}
+
+// NewDigestFromHex is deprecated. Use NewDigestFromHash instead.
 func NewDigestFromHex(alg, hex string) Digest {
-	return Digest(fmt.Sprintf("%s:%s", alg, hex))
+	return NewDigestFromHash(alg, hex)
 }
 
 // DigestRegexp matches valid digest types.
@@ -104,14 +109,12 @@ func (d Digest) Validate() error {
 		return ErrDigestInvalidFormat
 	}
 
-	algorithm := Algorithm(s[:i])
-	if !algorithm.Available() {
+	algorithm, ok := Algorithms[s[:i]]
+	if !ok || !algorithm.Available() {
 		return ErrDigestUnsupported
 	}
 
-	// Digests much always be hex-encoded, ensuring that their hex portion will
-	// always be size*2
-	if algorithm.Size()*2 != len(s[i+1:]) {
+	if algorithm.HashSize() != len(s[i+1:]) {
 		return ErrDigestInvalidLength
 	}
 
@@ -121,22 +124,38 @@ func (d Digest) Validate() error {
 // Algorithm returns the algorithm portion of the digest. This will panic if
 // the underlying digest is not in a valid format.
 func (d Digest) Algorithm() Algorithm {
-	return Algorithm(d[:d.sepIndex()])
+	identifier := string(d)[:d.sepIndex()]
+	if identifier == "" {
+		panic(fmt.Sprintf("empty digest algorithm for %v", d))
+	}
+	alg, ok := Algorithms[identifier]
+	if !ok {
+		panic(fmt.Sprintf("unrecognized algorithm %v", identifier))
+	}
+	if !alg.Available() {
+		panic(fmt.Sprintf("unavailable algorithm %v", identifier))
+	}
+	return alg
 }
 
 // Verifier returns a writer object that can be used to verify a stream of
 // content against the digest. If the digest is invalid, the method will panic.
 func (d Digest) Verifier() Verifier {
 	return hashVerifier{
-		hash:   d.Algorithm().Hash(),
-		digest: d,
+		digest:   d,
+		digester: d.Algorithm().Digester(),
 	}
 }
 
-// Hex returns the hex digest portion of the digest. This will panic if the
+// Hash returns the hash portion of the digest. This will panic if the
 // underlying digest is not in a valid format.
-func (d Digest) Hex() string {
+func (d Digest) Hash() string {
 	return string(d[d.sepIndex()+1:])
+}
+
+// Hex is is deprecated. Use Hash instead.
+func (d Digest) Hex() string {
+	return d.Hash()
 }
 
 func (d Digest) String() string {

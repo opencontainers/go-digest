@@ -20,20 +20,39 @@ import "hash"
 // to the return value of Hash, while calling Digest will return the current
 // value of the digest.
 type Digester interface {
-	Hash() hash.Hash // provides direct access to underlying hash instance.
+	// Hash provides direct access to the underlying Hash instance.
+	Hash() hash.Hash
+
+	// Digest returns the digest of the currently-hashed content.
 	Digest() Digest
 }
 
 // digester provides a simple digester definition that embeds a hasher.
 type digester struct {
-	alg  Algorithm
-	hash hash.Hash
+	name     string
+	hash     hash.Hash
+	encoding Encoding
 }
 
+func NewDigester(alg Algorithm, hash hash.Hash) Digester {
+	return &digester{
+		name:     alg.String(),
+		hash:     hash,
+		encoding: alg.Encoding(),
+	}
+}
+
+// Hash provides direct access to the underlying Hash instance.
 func (d *digester) Hash() hash.Hash {
 	return d.hash
 }
 
+// hashString returns the current encoded hash.
+func (d *digester) hashString() string {
+	return d.encoding.EncodeToString(d.hash.Sum(nil))
+}
+
+// Digest returns the digest of the currently-hashed content.
 func (d *digester) Digest() Digest {
-	return NewDigest(d.alg, d.hash)
+	return NewDigestFromHash(d.name, d.hashString())
 }
