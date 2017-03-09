@@ -8,7 +8,7 @@ Please see the [godoc](https://godoc.org/github.com/opencontainers/go-digest) fo
 
 # What is a digest?
 
-A digest is just a hash.
+A digest is just a [hash](https://en.wikipedia.org/wiki/Hash_function).
 
 The most common use case for a digest is to create a content
 identifier for use in [Content Addressable Storage](https://en.wikipedia.org/wiki/Content-addressable_storage)
@@ -60,17 +60,20 @@ out when using this package.
     ```go
     import (
         _ "crypto/sha256"
-   	    _ "crypto/sha512"
+        _ "crypto/sha512"
     )
     ```
     This may seem inconvenient but it allows you replace the hash 
     implementations with others, such as https://github.com/stevvooe/resumable.
  
-2. Even though `digest.Digest` may be assemable as a string, _always_ 
+2. Even though `digest.Digest` may be assemblable as a string, _always_ 
     verify your input with `digest.Parse` or use `Digest.Validate`
     when accepting untrusted input. While there are measures to 
     avoid common problems, this will ensure you have valid digests
     in the rest of your application.
+
+3. While alternative encodings of hash values (digests) are possible (for
+    example, base64), this package deals exclusively with hex-encoded digests.
 
 # Stability
 

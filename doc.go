@@ -32,6 +32,8 @@
 // In this case, the string "sha256" is the algorithm and the hex bytes are
 // the "digest".
 //
+// This package exclusively uses hex encoding for all digests.
+//
 // Because the Digest type is simply a string, once a valid Digest is
 // obtained, comparisons are cheap, quick and simple to express with the
 // standard equality operator.
