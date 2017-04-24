@@ -53,7 +53,7 @@ func TestParseDigest(t *testing.T) {
 		{
 			// not hex
 			input: "sha256:d41d8cd98f00b204e9800m98ecf8427e",
-			err:   ErrDigestInvalidFormat,
+			err:   ErrDigestInvalidLength,
 		},
 		{
 			// too short
@@ -68,6 +68,24 @@ func TestParseDigest(t *testing.T) {
 		{
 			input: "foo:d41d8cd98f00b204e9800998ecf8427e",
 			err:   ErrDigestUnsupported,
+		},
+		{
+			// repeated separators
+			input: "sha384__foo+bar:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			err:   ErrDigestInvalidFormat,
+		},
+		{
+			// ensure that we parse, but we don't have support for the algorithm
+			input:     "sha384.foo+bar:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			algorithm: "sha384.foo+bar",
+			hex:       "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			err:       ErrDigestUnsupported,
+		},
+		{
+			input:     "sha384_foo+bar:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			algorithm: "sha384_foo+bar",
+			hex:       "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			err:       ErrDigestUnsupported,
 		},
 	} {
 		digest, err := Parse(testcase.input)
