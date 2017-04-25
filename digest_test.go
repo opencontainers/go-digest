@@ -23,17 +23,17 @@ func TestParseDigest(t *testing.T) {
 		input     string
 		err       error
 		algorithm Algorithm
-		hex       string
+		encoded   string
 	}{
 		{
 			input:     "sha256:e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
 			algorithm: "sha256",
-			hex:       "e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
+			encoded:   "e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
 		},
 		{
 			input:     "sha384:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			algorithm: "sha384",
-			hex:       "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 		},
 		{
 			// empty hex
@@ -78,13 +78,13 @@ func TestParseDigest(t *testing.T) {
 			// ensure that we parse, but we don't have support for the algorithm
 			input:     "sha384.foo+bar:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			algorithm: "sha384.foo+bar",
-			hex:       "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			err:       ErrDigestUnsupported,
 		},
 		{
 			input:     "sha384_foo+bar:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			algorithm: "sha384_foo+bar",
-			hex:       "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			err:       ErrDigestUnsupported,
 		},
 	} {
@@ -101,8 +101,8 @@ func TestParseDigest(t *testing.T) {
 			t.Fatalf("incorrect algorithm for parsed digest: %q != %q", digest.Algorithm(), testcase.algorithm)
 		}
 
-		if digest.Hex() != testcase.hex {
-			t.Fatalf("incorrect hex for parsed digest: %q != %q", digest.Hex(), testcase.hex)
+		if digest.Encoded() != testcase.encoded {
+			t.Fatalf("incorrect hex for parsed digest: %q != %q", digest.Encoded(), testcase.encoded)
 		}
 
 		// Parse string return value and check equality
@@ -116,7 +116,7 @@ func TestParseDigest(t *testing.T) {
 			t.Fatalf("expected equal: %q != %q", newParsed, digest)
 		}
 
-		newFromHex := NewDigestFromHex(newParsed.Algorithm().String(), newParsed.Hex())
+		newFromHex := NewDigestFromEncoded(newParsed.Algorithm(), newParsed.Encoded())
 		if newFromHex != digest {
 			t.Fatalf("%v != %v", newFromHex, digest)
 		}
