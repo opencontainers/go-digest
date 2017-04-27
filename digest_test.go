@@ -87,6 +87,12 @@ func TestParseDigest(t *testing.T) {
 			encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			err:       ErrDigestUnsupported,
 		},
+		{
+			input:     "sha256+b64:LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564",
+			algorithm: "sha256+b64",
+			encoded:   "LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564",
+			err:       ErrDigestUnsupported,
+		},
 	} {
 		digest, err := Parse(testcase.input)
 		if err != testcase.err {
