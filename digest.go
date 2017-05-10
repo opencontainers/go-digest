@@ -45,16 +45,21 @@ func NewDigest(alg Algorithm, h hash.Hash) Digest {
 // functions. This is also useful for rebuilding digests from binary
 // serializations.
 func NewDigestFromBytes(alg Algorithm, p []byte) Digest {
-	return Digest(fmt.Sprintf("%s:%x", alg, p))
+	return NewDigestFromEncoded(alg, alg.Encode(p))
 }
 
-// NewDigestFromHex returns a Digest from alg and a the hex encoded digest.
+// NewDigestFromHex is deprecated. Please use NewDigestFromEncoded.
 func NewDigestFromHex(alg, hex string) Digest {
-	return Digest(fmt.Sprintf("%s:%s", alg, hex))
+	return NewDigestFromEncoded(Algorithm(alg), hex)
+}
+
+// NewDigestFromEncoded returns a Digest from alg and the encoded digest.
+func NewDigestFromEncoded(alg Algorithm, encoded string) Digest {
+	return Digest(fmt.Sprintf("%s:%s", alg, encoded))
 }
 
 // DigestRegexp matches valid digest types.
-var DigestRegexp = regexp.MustCompile(`[a-zA-Z0-9-_+.]+:[a-fA-F0-9]+`)
+var DigestRegexp = regexp.MustCompile(`[a-z0-9]+(?:[.+_-][a-z0-9]+)*:[a-zA-Z0-9=_-]+`)
 
 // DigestRegexpAnchored matches valid digest types, anchored to the start and end of the match.
 var DigestRegexpAnchored = regexp.MustCompile(`^` + DigestRegexp.String() + `$`)
@@ -133,10 +138,15 @@ func (d Digest) Verifier() Verifier {
 	}
 }
 
-// Hex returns the hex digest portion of the digest. This will panic if the
+// Encoded returns the encoded portion of the digest. This will panic if the
 // underlying digest is not in a valid format.
-func (d Digest) Hex() string {
+func (d Digest) Encoded() string {
 	return string(d[d.sepIndex()+1:])
+}
+
+// Hex is deprecated. Please use Digest.Encoded.
+func (d Digest) Hex() string {
+	return d.Encoded()
 }
 
 func (d Digest) String() string {

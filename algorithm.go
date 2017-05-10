@@ -125,6 +125,14 @@ func (a Algorithm) Hash() hash.Hash {
 	return algorithms[a].New()
 }
 
+// Encode encodes the raw bytes of a digest, typically from a hash.Hash, into
+// the encoded portion of the digest.
+func (a Algorithm) Encode(d []byte) string {
+	// TODO(stevvooe): Currently, all algorithms use a hex encoding. When we
+	// add support for back registration, we can modify this accordingly.
+	return fmt.Sprintf("%x", d)
+}
+
 // FromReader returns the digest of the reader using the algorithm.
 func (a Algorithm) FromReader(rd io.Reader) (Digest, error) {
 	digester := a.Digester()
