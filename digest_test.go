@@ -93,6 +93,10 @@ func TestParseDigest(t *testing.T) {
 			encoded:   "LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564",
 			err:       ErrDigestUnsupported,
 		},
+		{
+			input: "sha256:E58FCF7418D4390DEC8E8FB69D88C06EC07039D651FEDD3AA72AF9972E7D046B",
+			err:   ErrDigestInvalidFormat,
+		},
 	} {
 		digest, err := Parse(testcase.input)
 		if err != testcase.err {
