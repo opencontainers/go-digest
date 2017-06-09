@@ -36,6 +36,10 @@ func TestParseDigest(t *testing.T) {
 			encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 		},
 		{
+			input: "",
+			err:   ErrDigestInvalidFormat,
+		},
+		{
 			// empty hex
 			input: "sha256:",
 			err:   ErrDigestInvalidFormat,
@@ -53,17 +57,17 @@ func TestParseDigest(t *testing.T) {
 		{
 			// not hex
 			input: "sha256:d41d8cd98f00b204e9800m98ecf8427e",
-			err:   ErrDigestInvalidLength,
+			err:   ErrDigestInvalidFormat,
 		},
 		{
 			// too short
 			input: "sha256:abcdef0123456789",
-			err:   ErrDigestInvalidLength,
+			err:   ErrDigestInvalidFormat,
 		},
 		{
 			// too short (from different algorithm)
 			input: "sha512:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-			err:   ErrDigestInvalidLength,
+			err:   ErrDigestInvalidFormat,
 		},
 		{
 			input: "foo:d41d8cd98f00b204e9800998ecf8427e",

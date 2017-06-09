@@ -68,8 +68,8 @@ var (
 	// ErrDigestInvalidFormat returned when digest format invalid.
 	ErrDigestInvalidFormat = fmt.Errorf("invalid checksum digest format")
 
-	// ErrDigestInvalidLength returned when digest has invalid length.
-	ErrDigestInvalidLength = fmt.Errorf("invalid checksum digest length")
+	// ErrDigestInvalidLength is deprecated.  Please use ErrDigestInvalidFormat.
+	ErrDigestInvalidLength = ErrDigestInvalidFormat
 
 	// ErrDigestUnsupported returned when the digest algorithm is unsupported.
 	ErrDigestUnsupported = fmt.Errorf("unsupported digest algorithm")

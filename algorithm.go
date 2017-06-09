@@ -180,11 +180,6 @@ func (a Algorithm) Validate(encoded string) error {
 	if !ok {
 		return ErrDigestUnsupported
 	}
-	// Digests much always be hex-encoded, ensuring that their hex portion will
-	// always be size*2
-	if a.Size()*2 != len(encoded) {
-		return ErrDigestInvalidLength
-	}
 	if r.MatchString(encoded) {
 		return nil
 	}
