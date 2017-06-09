@@ -59,7 +59,7 @@ func NewDigestFromEncoded(alg Algorithm, encoded string) Digest {
 }
 
 // DigestRegexp matches valid digest types.
-var DigestRegexp = regexp.MustCompile(`[a-z0-9]+(?:[.+_-][a-z0-9]+)*:[a-zA-Z0-9=_-]+`)
+var DigestRegexp = regexp.MustCompile(algorithmRegexp.String() + `:` + encodedRegexp.String())
 
 // DigestRegexpAnchored matches valid digest types, anchored to the start and end of the match.
 var DigestRegexpAnchored = regexp.MustCompile(`^` + DigestRegexp.String() + `$`)
@@ -99,20 +99,27 @@ func FromString(s string) Digest {
 
 // Validate checks that the contents of d is a valid digest, returning an
 // error if not.
-func (d Digest) Validate() error {
+func (d Digest) Validate() (err error) {
 	s := string(d)
 	i := strings.Index(s, ":")
 	if i <= 0 || i+1 == len(s) {
 		return ErrDigestInvalidFormat
 	}
 	algorithm, encoded := Algorithm(s[:i]), s[i+1:]
-	if !algorithm.Available() {
-		if !DigestRegexpAnchored.MatchString(s) {
-			return ErrDigestInvalidFormat
+
+	err = algorithm.Validate(encoded)
+	if err == ErrDigestUnsupported {
+		err2 := algorithm.ValidateIdentifier()
+		if err2 != nil {
+			return err2
 		}
-		return ErrDigestUnsupported
+		return err
 	}
-	return algorithm.Validate(encoded)
+	if err != nil {
+		return err
+	}
+
+	return algorithm.ValidateIdentifier()
 }
 
 // Algorithm returns the algorithm portion of the digest. This will panic if

@@ -59,6 +59,11 @@ var (
 		SHA384: regexp.MustCompile(`^[a-f0-9]{96}$`),
 		SHA512: regexp.MustCompile(`^[a-f0-9]{128}$`),
 	}
+
+	algorithmRegexp         = regexp.MustCompile(`[a-z0-9]+(?:[.+_-][a-z0-9]+)*`)
+	algorithmRegexpAnchored = regexp.MustCompile(`^` + algorithmRegexp.String() + `$`)
+	encodedRegexp           = regexp.MustCompile(`[a-zA-Z0-9=_-]+`)
+	encodedRegexpAnchored   = regexp.MustCompile(`^` + encodedRegexp.String() + `$`)
 )
 
 // Available returns true if the digest type is available for use. If this
@@ -178,15 +183,28 @@ func (a Algorithm) FromString(s string) Digest {
 func (a Algorithm) Validate(encoded string) error {
 	r, ok := anchoredEncodedRegexps[a]
 	if !ok {
-		return ErrDigestUnsupported
+		r = encodedRegexpAnchored
 	}
-	// Digests much always be hex-encoded, ensuring that their hex portion will
-	// always be size*2
-	if a.Size()*2 != len(encoded) {
-		return ErrDigestInvalidLength
+	if a.Available() {
+		// Digests much always be hex-encoded, ensuring that their hex portion will
+		// always be size*2
+		if a.Size()*2 != len(encoded) {
+			return ErrDigestInvalidLength
+		}
 	}
 	if r.MatchString(encoded) {
-		return nil
+		if ok {
+			return nil
+		}
+		return ErrDigestUnsupported
 	}
 	return ErrDigestInvalidFormat
+}
+
+// ValidateIdentifier validates the algorithm name.
+func (a Algorithm) ValidateIdentifier() error {
+	if !algorithmRegexpAnchored.MatchString(a.String()) {
+		return ErrDigestInvalidFormat
+	}
+	return nil
 }

@@ -160,7 +160,7 @@ func TestValidate(t *testing.T) {
 			// unsupported, but the encoded part cannot possibly be valid because it contains invalid characters
 			encoded:   "!",
 			algorithm: "foo",
-			err:       ErrDigestUnsupported,
+			err:       ErrDigestInvalidFormat,
 		},
 		{
 			// uppercase
@@ -172,6 +172,47 @@ func TestValidate(t *testing.T) {
 		err := testcase.algorithm.Validate(testcase.encoded)
 		if err != testcase.err {
 			t.Fatalf("error differed from expected while validating %q: %v != %v", testcase.encoded, err, testcase.err)
+		}
+	}
+}
+
+func TestValidateIdentifier(t *testing.T) {
+	for _, testcase := range []struct {
+		algorithm Algorithm
+		err       error
+	}{
+		{
+			algorithm: "sha256",
+		},
+		{
+			algorithm: "sha384",
+		},
+		{
+			// empty identifier
+			algorithm: "",
+			err:       ErrDigestInvalidFormat,
+		},
+		{
+			// repeated separators
+			algorithm: "sha384__foo+bar",
+			err:       ErrDigestInvalidFormat,
+		},
+		{
+			// ensure that we parse valid separators
+			algorithm: "sha384.foo+bar",
+		},
+		{
+			// ensure that we parse valid separators
+			algorithm: "sha384_foo+bar",
+		},
+		{
+			// ensure that we parse valid separators
+			algorithm: "sha256+b64",
+		},
+	} {
+		err := testcase.algorithm.ValidateIdentifier()
+		if err != testcase.err {
+			t.Fatalf("error differed from expected while validating identifier %q: %v != %v", testcase.algorithm, err, testcase.err)
 		}
 	}
 }
