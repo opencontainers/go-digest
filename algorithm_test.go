@@ -112,3 +112,66 @@ func TestFroms(t *testing.T) {
 		}
 	}
 }
+
+func TestValidate(t *testing.T) {
+	for _, testcase := range []struct {
+		encoded   string
+		algorithm Algorithm
+		err       error
+	}{
+		{
+			encoded:   "e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
+			algorithm: "sha256",
+		},
+		{
+			encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
+			algorithm: "sha384",
+		},
+		{
+			// empty encoded
+			encoded:   "",
+			algorithm: "sha256",
+			err:       ErrDigestInvalidLength,
+		},
+		{
+			// not hex (contains an m)
+			encoded:   "d41d8cd98f00b204e9800m98ecf8427e",
+			algorithm: "sha256",
+			err:       ErrDigestInvalidLength,
+		},
+		{
+			// too short (sha256)
+			encoded:   "abcdef0123456789",
+			algorithm: "sha256",
+			err:       ErrDigestInvalidLength,
+		},
+		{
+			// too short (sha512)
+			encoded:   "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+			algorithm: "sha512",
+			err:       ErrDigestInvalidLength,
+		},
+		{
+			encoded:   "d41d8cd98f00b204e9800998ecf8427e",
+			algorithm: "foo",
+			err:       ErrDigestUnsupported,
+		},
+		{
+			// unsupported, but the encoded part cannot possibly be valid because it contains invalid characters
+			encoded:   "!",
+			algorithm: "foo",
+			err:       ErrDigestUnsupported,
+		},
+		{
+			// uppercase
+			encoded:   "E58FCF7418D4390DEC8E8FB69D88C06EC07039D651FEDD3AA72AF9972E7D046B",
+			algorithm: "sha256",
+			err:       ErrDigestInvalidFormat,
+		},
+	} {
+		err := testcase.algorithm.Validate(testcase.encoded)
+		if err != testcase.err {
+			t.Fatalf("error differed from expected while validating %q: %v != %v", testcase.encoded, err, testcase.err)
+		}
+	}
+}

@@ -70,6 +70,11 @@ func TestParseDigest(t *testing.T) {
 			err:   ErrDigestUnsupported,
 		},
 		{
+			// unsupported, but the encoded part cannot possibly be valid because it contains invalid characters
+			input: "foo:!",
+			err:   ErrDigestInvalidFormat,
+		},
+		{
 			// repeated separators
 			input: "sha384__foo+bar:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			err:   ErrDigestInvalidFormat,
