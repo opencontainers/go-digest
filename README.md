@@ -85,6 +85,7 @@ If you find an issue, please follow the [security][security] protocol to report 
 
 # Copyright and license
 
+Copyright © 2019, 2020 OCI Contributors
 Copyright © 2016 Docker, Inc.
 All rights reserved, except as follows.
 Code is released under the [Apache 2.0 license](LICENSE).
