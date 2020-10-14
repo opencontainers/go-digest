@@ -1,4 +1,7 @@
 language: go
+arch:
+  - ppc64le
+  - amd64
 go:
   - 1.12.x
   - 1.13.x
