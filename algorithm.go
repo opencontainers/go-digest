@@ -16,11 +16,11 @@
 package digest
 
 import (
-	"crypto"
 	"fmt"
 	"hash"
 	"io"
 	"regexp"
+	"sync"
 )
 
 // Algorithm identifies and implementation of a digester by an identifier.
@@ -30,10 +30,6 @@ type Algorithm string
 
 // supported digest types
 const (
-	SHA256 Algorithm = "sha256" // sha256 with hex encoding (lower case only)
-	SHA384 Algorithm = "sha384" // sha384 with hex encoding (lower case only)
-	SHA512 Algorithm = "sha512" // sha512 with hex encoding (lower case only)
-
 	// Canonical is the primary digest algorithm used with the distribution
 	// project. Other digests may be used but this one is the primary storage
 	// digest.
@@ -41,30 +37,75 @@ const (
 )
 
 var (
-	// TODO(stevvooe): Follow the pattern of the standard crypto package for
-	// registration of digests. Effectively, we are a registerable set and
-	// common symbol access.
+	algorithmRegexp = regexp.MustCompile(`^[a-z0-9]+([+._-][a-z0-9]+)*$`)
+)
 
-	// algorithms maps values to hash.Hash implementations. Other algorithms
+// CryptoHash is the interface that any hash algorithm must implement
+type CryptoHash interface {
+	// Available reports whether the given hash function is usable in the current binary.
+	Available() bool
+	// Size returns the length, in bytes, of a digest resulting from the given hash function.
+	Size() int
+	// New returns a new hash.Hash calculating the given hash function. If the hash function is not
+	// available, it may panic.
+	New() hash.Hash
+}
+
+var (
+	// algorithms maps values to CryptoHash implementations. Other algorithms
 	// may be available but they cannot be calculated by the digest package.
-	algorithms = map[Algorithm]crypto.Hash{
-		SHA256: crypto.SHA256,
-		SHA384: crypto.SHA384,
-		SHA512: crypto.SHA512,
-	}
+	//
+	// See: RegisterAlgorithm
+	algorithms = map[Algorithm]CryptoHash{}
 
 	// anchoredEncodedRegexps contains anchored regular expressions for hex-encoded digests.
 	// Note that /A-F/ disallowed.
-	anchoredEncodedRegexps = map[Algorithm]*regexp.Regexp{
-		SHA256: regexp.MustCompile(`^[a-f0-9]{64}$`),
-		SHA384: regexp.MustCompile(`^[a-f0-9]{96}$`),
-		SHA512: regexp.MustCompile(`^[a-f0-9]{128}$`),
-	}
+	anchoredEncodedRegexps = map[Algorithm]*regexp.Regexp{}
+
+	// algorithmsLock protects algorithms, and anchoredEncodedRegexps
+	algorithmsLock sync.RWMutex
 )
+
+// RegisterAlgorithm may be called to dynamically register an algorithm. The implementation is a CryptoHash, and
+// the regex is meant to match the hash portion of the algorithm. If a duplicate algorithm is already registered,
+// the return value is false, otherwise if registration was successful the return value is true.
+//
+// The algorithm encoding format must be based on hex.
+//
+// The algorithm name must be conformant to the BNF specification in the OCI image-spec, otherwise the function
+// will panic.
+func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
+	algorithmsLock.Lock()
+	defer algorithmsLock.Unlock()
+
+	if !algorithmRegexp.MatchString(string(algorithm)) {
+		panic(fmt.Sprintf("Algorithm %s has a name which does not fit within the allowed grammar", algorithm))
+	}
+
+	if _, ok := algorithms[algorithm]; ok {
+		return false
+	}
+
+	algorithms[algorithm] = implementation
+	// We can do this since the Digest function below only implements a hex digest. If we open this in the future
+	// we need to allow for alternative digest algorithms to be implemented and for the user to pass their own
+	// custom regexp.
+	anchoredEncodedRegexps[algorithm] = hexDigestRegex(implementation)
+	return true
+}
+
+// hexDigestRegex can be used to generate a regex for RegisterAlgorithm.
+func hexDigestRegex(cryptoHash CryptoHash) *regexp.Regexp {
+	hexdigestbytes := cryptoHash.Size() * 2
+	return regexp.MustCompile(fmt.Sprintf("^[a-f0-9]{%d}$", hexdigestbytes))
+}
 
 // Available returns true if the digest type is available for use. If this
 // returns false, Digester and Hash will return nil.
 func (a Algorithm) Available() bool {
+	algorithmsLock.RLock()
+	defer algorithmsLock.RUnlock()
+
 	h, ok := algorithms[a]
 	if !ok {
 		return false
@@ -80,6 +121,9 @@ func (a Algorithm) String() string {
 
 // Size returns number of bytes returned by the hash.
 func (a Algorithm) Size() int {
+	algorithmsLock.RLock()
+	defer algorithmsLock.RUnlock()
+
 	h, ok := algorithms[a]
 	if !ok {
 		return 0
@@ -132,6 +176,8 @@ func (a Algorithm) Hash() hash.Hash {
 		panic(fmt.Sprintf("%v not available (make sure it is imported)", a))
 	}
 
+	algorithmsLock.RLock()
+	defer algorithmsLock.RUnlock()
 	return algorithms[a].New()
 }
 
@@ -140,6 +186,9 @@ func (a Algorithm) Hash() hash.Hash {
 func (a Algorithm) Encode(d []byte) string {
 	// TODO(stevvooe): Currently, all algorithms use a hex encoding. When we
 	// add support for back registration, we can modify this accordingly.
+	//
+	// We support dynamic registration now, but we do not allow for the user to
+	// specify their own custom format. Hash functions may only use hex encoding.
 	return fmt.Sprintf("%x", d)
 }
 
@@ -177,6 +226,9 @@ func (a Algorithm) FromString(s string) Digest {
 
 // Validate validates the encoded portion string
 func (a Algorithm) Validate(encoded string) error {
+	algorithmsLock.RLock()
+	defer algorithmsLock.RUnlock()
+
 	r, ok := anchoredEncodedRegexps[a]
 	if !ok {
 		return ErrDigestUnsupported

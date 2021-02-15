@@ -17,6 +17,7 @@ package digest
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/rand"
 	_ "crypto/sha256"
 	_ "crypto/sha512"
@@ -112,4 +113,40 @@ func TestFroms(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestBadAlgorithmNameRegistration(t *testing.T) {
+	expectPanic := func(algorithm string) {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.Fatal("Expected panic and did not find one")
+			}
+			t.Logf("Captured panic: %v", r)
+		}()
+		// We just use SHA256 here as a test / stand-in
+		RegisterAlgorithm(Algorithm(algorithm), crypto.SHA256)
+	}
+
+	expectPanic("sha256-")
+	expectPanic("-")
+	expectPanic("SHA256")
+	expectPanic("sha25*")
+}
+
+func TestGoodAlgorithmNameRegistration(t *testing.T) {
+	expectNoPanic := func(algorithm string) {
+		defer func() {
+			r := recover()
+			if r != nil {
+				t.Fatalf("Expected panic and found one: %v", r)
+			}
+		}()
+
+		// We just use SHA256 here as a test / stand-in
+		RegisterAlgorithm(Algorithm(algorithm), crypto.SHA256)
+	}
+
+	expectNoPanic("sha256-test")
+	expectNoPanic("sha256_384")
 }
