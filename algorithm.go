@@ -34,6 +34,9 @@ const (
 	// project. Other digests may be used but this one is the primary storage
 	// digest.
 	Canonical = SHA256
+	// BLAKE3 is the blake3 algorithm with the default 256-bit output size
+	// github.com/opencontainers/go-digest/blake3 should be imported to make it available
+	BLAKE3 Algorithm = "blake3"
 )
 
 var (
