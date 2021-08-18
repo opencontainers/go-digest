@@ -19,8 +19,6 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/rand"
-	_ "crypto/sha256"
-	_ "crypto/sha512"
 	"flag"
 	"fmt"
 	"strings"

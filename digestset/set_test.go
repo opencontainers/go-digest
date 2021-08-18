@@ -17,7 +17,6 @@ package digestset
 
 import (
 	"crypto/sha256"
-	_ "crypto/sha512"
 	"encoding/binary"
 	"math/rand"
 	"testing"
