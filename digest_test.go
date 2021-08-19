@@ -39,6 +39,9 @@ func TestParseDigest(t *testing.T) {
 			Encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 		},
 		{
+			Input:     "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+			Algorithm: "blake3",
+		{
 			// empty
 			Input: "",
 			Err:   digest.ErrDigestInvalidFormat,

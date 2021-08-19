@@ -37,6 +37,15 @@ func TestDigestVerifier(t *testing.T) {
 	}
 }
 
+func TestDigestBlakeVector(t *testing.T) {
+	// From the BLAKE3 test vectors.
+	testvector := Blake3.FromBytes([]byte{0, 1, 2, 3, 4})
+	expected := "blake3:b40b44dfd97e7a84a996a91af8b85188c66c126940ba7aad2e7ae6b385402aa2"
+	if string(testvector) != expected {
+		t.Fatalf("Expected: %s; Got: %s", expected, testvector)
+	}
+}
+
 // TestVerifierUnsupportedDigest ensures that unsupported digest validation is
 // flowing through verifier creation.
 func TestVerifierUnsupportedDigest(t *testing.T) {

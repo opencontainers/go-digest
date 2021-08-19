@@ -103,14 +103,16 @@ const (
 
 var algorithmRegexp = regexp.MustCompile(`^[a-z0-9]+([+._-][a-z0-9]+)*$`)
 
-// CryptoHash is the interface that any hash algorithm must implement
+// CryptoHash is the interface that any digest algorithm must implement
 type CryptoHash interface {
-	// Available reports whether the given hash function is usable in the current binary.
+	// Available reports whether the given hash function is usable in the
+	// current binary.
 	Available() bool
-	// Size returns the length, in bytes, of a digest resulting from the given hash function.
+	// Size returns the length, in bytes, of a digest resulting from the given
+	// hash function.
 	Size() int
-	// New returns a new hash.Hash calculating the given hash function. If the hash function is not
-	// available, it may panic.
+	// New returns a new hash.Hash calculating the given hash function. If the
+	// hash function is not available, it may panic.
 	New() hash.Hash
 }
 
@@ -129,14 +131,16 @@ var (
 	algorithmsLock sync.RWMutex
 )
 
-// RegisterAlgorithm may be called to dynamically register an algorithm. The implementation is a CryptoHash, and
-// the regex is meant to match the hash portion of the algorithm. If a duplicate algorithm is already registered,
-// the return value is false, otherwise if registration was successful the return value is true.
+// RegisterAlgorithm may be called to dynamically register an algorithm. The
+// implementation is a CryptoHash, and the regex is meant to match the hash
+// portion of the algorithm. If a duplicate algorithm is already registered, the
+// return value is false, otherwise if registration was successful the return
+// value is true.
 //
 // The algorithm encoding format must be based on hex.
 //
-// The algorithm name must be conformant to the BNF specification in the OCI image-spec, otherwise the function
-// will panic.
+// The algorithm name must be conformant to the BNF specification in the OCI
+// image-spec, otherwise the function will panic.
 func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
 	algorithmsLock.Lock()
 	defer algorithmsLock.Unlock()
@@ -150,8 +154,10 @@ func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
 	}
 
 	algorithms[algorithm] = implementation
-	// We can do this since the Digest function below only implements a hex digest. If we open this in the future
-	// we need to allow for alternative digest algorithms to be implemented and for the user to pass their own
+
+	// We can do this since the Digest function below only implements a hex
+	// digest. If we open this in the future we need to allow for alternative
+	// digest algorithms to be implemented and for the user to pass their own
 	// custom regexp.
 	anchoredEncodedRegexps[algorithm] = hexDigestRegex(implementation)
 	return true
