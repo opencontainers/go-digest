@@ -11,17 +11,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package blake3
+package digest
 
 import (
 	"hash"
 
-	"github.com/opencontainers/go-digest"
 	"github.com/zeebo/blake3"
 )
 
+const (
+	// Blake3 is the blake3 algorithm with the default 256-bit output size
+	Blake3 Algorithm = "blake3"
+
+	// BLAKE3 is deprecated. Use the symbol "Blake3" instead.
+	BLAKE3 = Blake3
+)
+
 func init() {
-	digest.RegisterAlgorithm(digest.BLAKE3, &blake3hash{})
+	RegisterAlgorithm(Blake3, &blake3hash{})
 }
 
 type blake3hash struct{}

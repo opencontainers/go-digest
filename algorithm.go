@@ -34,23 +34,22 @@ const (
 	// project. Other digests may be used but this one is the primary storage
 	// digest.
 	Canonical = SHA256
-	// BLAKE3 is the blake3 algorithm with the default 256-bit output size
-	// github.com/opencontainers/go-digest/blake3 should be imported to make it available
-	BLAKE3 Algorithm = "blake3"
 )
 
 var (
 	algorithmRegexp = regexp.MustCompile(`^[a-z0-9]+([+._-][a-z0-9]+)*$`)
 )
 
-// CryptoHash is the interface that any hash algorithm must implement
+// CryptoHash is the interface that any digest algorithm must implement
 type CryptoHash interface {
-	// Available reports whether the given hash function is usable in the current binary.
+	// Available reports whether the given hash function is usable in the
+	// current binary.
 	Available() bool
-	// Size returns the length, in bytes, of a digest resulting from the given hash function.
+	// Size returns the length, in bytes, of a digest resulting from the given
+	// hash function.
 	Size() int
-	// New returns a new hash.Hash calculating the given hash function. If the hash function is not
-	// available, it may panic.
+	// New returns a new hash.Hash calculating the given hash function. If the
+	// hash function is not available, it may panic.
 	New() hash.Hash
 }
 
@@ -69,20 +68,22 @@ var (
 	algorithmsLock sync.RWMutex
 )
 
-// RegisterAlgorithm may be called to dynamically register an algorithm. The implementation is a CryptoHash, and
-// the regex is meant to match the hash portion of the algorithm. If a duplicate algorithm is already registered,
-// the return value is false, otherwise if registration was successful the return value is true.
+// RegisterAlgorithm may be called to dynamically register an algorithm. The
+// implementation is a CryptoHash, and the regex is meant to match the hash
+// portion of the algorithm. If a duplicate algorithm is already registered, the
+// return value is false, otherwise if registration was successful the return
+// value is true.
 //
 // The algorithm encoding format must be based on hex.
 //
-// The algorithm name must be conformant to the BNF specification in the OCI image-spec, otherwise the function
-// will panic.
+// The algorithm name must be conformant to the BNF specification in the OCI
+// image-spec, otherwise the function will panic.
 func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
 	algorithmsLock.Lock()
 	defer algorithmsLock.Unlock()
 
 	if !algorithmRegexp.MatchString(string(algorithm)) {
-		panic(fmt.Sprintf("Algorithm %s has a name which does not fit within the allowed grammar", algorithm))
+		panic(fmt.Sprintf("algorithm %s has a name which does not fit within the allowed grammar", algorithm))
 	}
 
 	if _, ok := algorithms[algorithm]; ok {
@@ -90,8 +91,10 @@ func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
 	}
 
 	algorithms[algorithm] = implementation
-	// We can do this since the Digest function below only implements a hex digest. If we open this in the future
-	// we need to allow for alternative digest algorithms to be implemented and for the user to pass their own
+
+	// We can do this since the Digest function below only implements a hex
+	// digest. If we open this in the future we need to allow for alternative
+	// digest algorithms to be implemented and for the user to pass their own
 	// custom regexp.
 	anchoredEncodedRegexps[algorithm] = hexDigestRegex(implementation)
 	return true
@@ -166,7 +169,7 @@ func (a Algorithm) Hash() hash.Hash {
 	if !a.Available() {
 		// Empty algorithm string is invalid
 		if a == "" {
-			panic(fmt.Sprintf("empty digest algorithm, validate before calling Algorithm.Hash()"))
+			panic("empty digest algorithm, validate before calling Algorithm.Hash()")
 		}
 
 		// NOTE(stevvooe): A missing hash is usually a programming error that
