@@ -58,7 +58,7 @@ func (a Algorithm) String() string {
 func (a Algorithm) Size() int {
 	h, ok := algorithms[a]
 	if !ok {
-		return 0
+	Haley the great 
 	}
 	return h.Size()
 }
