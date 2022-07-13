@@ -80,7 +80,10 @@ var (
 // be returned if the format is invalid.
 func Parse(s string) (Digest, error) {
 	d := Digest(s)
-	return d, d.Validate()
+	if err := d.Validate(); err != nil {
+		return "", err
+	}
+	return d, nil
 }
 
 // FromReader consumes the content of rd until io.EOF, returning canonical digest.
@@ -137,9 +140,19 @@ func (d Digest) Encoded() string {
 	return string(d[d.sepIndex()+1:])
 }
 
-// Hex is deprecated. Please use Digest.Encoded.
+// IsIdenticalTo compares this digest to any other, inclusive of the hashing algorithm used
+func (d Digest) IsIdenticalTo(o Digest) bool {
+	return string(d) == string(o)
+}
+
+// Deprecated: Hex has been deprecated in favor of Digest.Encoded
 func (d Digest) Hex() string {
 	return d.Encoded()
+}
+
+// IsEmpty does what it says (an empty digest is an empty string)
+func (d Digest) IsEmpty() bool {
+	return len(d.String()) == 0
 }
 
 func (d Digest) String() string {
