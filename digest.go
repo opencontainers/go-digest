@@ -80,7 +80,10 @@ var (
 // be returned if the format is invalid.
 func Parse(s string) (Digest, error) {
 	d := Digest(s)
-	return d, d.Validate()
+	if err := d.Validate(); err != nil {
+		return "", err
+	}
+	return d, nil
 }
 
 // FromReader consumes the content of rd until io.EOF, returning canonical digest.
@@ -137,7 +140,7 @@ func (d Digest) Encoded() string {
 	return string(d[d.sepIndex()+1:])
 }
 
-// Hex is deprecated. Please use Digest.Encoded.
+// Deprecated: Hex has been deprecated in favor of Digest.Encoded
 func (d Digest) Hex() string {
 	return d.Encoded()
 }
