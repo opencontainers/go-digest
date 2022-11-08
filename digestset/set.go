@@ -99,7 +99,7 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 			return dst.entries[i].val >= d
 		}
 	} else {
-		hex = dgst.Hex()
+		hex = dgst.Encoded()
 		alg = dgst.Algorithm()
 		searchFunc = func(i int) bool {
 			if dst.entries[i].val == hex {
@@ -131,7 +131,7 @@ func (dst *Set) Add(d digest.Digest) error {
 	}
 	dst.mutex.Lock()
 	defer dst.mutex.Unlock()
-	entry := &digestEntry{alg: d.Algorithm(), val: d.Hex(), digest: d}
+	entry := &digestEntry{alg: d.Algorithm(), val: d.Encoded(), digest: d}
 	searchFunc := func(i int) bool {
 		if dst.entries[i].val == entry.val {
 			return dst.entries[i].alg >= entry.alg
@@ -162,7 +162,7 @@ func (dst *Set) Remove(d digest.Digest) error {
 	}
 	dst.mutex.Lock()
 	defer dst.mutex.Unlock()
-	entry := &digestEntry{alg: d.Algorithm(), val: d.Hex(), digest: d}
+	entry := &digestEntry{alg: d.Algorithm(), val: d.Encoded(), digest: d}
 	searchFunc := func(i int) bool {
 		if dst.entries[i].val == entry.val {
 			return dst.entries[i].alg >= entry.alg
