@@ -15,10 +15,10 @@
 package testdigest
 
 import (
-	"testing"
-
 	_ "crypto/sha256"
 	_ "crypto/sha512"
+	"testing"
+
 	"github.com/opencontainers/go-digest"
 )
 
@@ -67,12 +67,12 @@ func TestParseDigest(t *testing.T) {
 		{
 			// not hex
 			Input: "sha256:d41d8cd98f00b204e9800m98ecf8427e",
-			Err:   digest. ErrDigestInvalidLength,
+			Err:   digest.ErrDigestInvalidLength,
 		},
 		{
 			// too short
 			Input: "sha256:abcdef0123456789",
-			Err:   digest. ErrDigestInvalidLength,
+			Err:   digest.ErrDigestInvalidLength,
 		},
 		{
 			// too short (from different Algorithm)
@@ -93,24 +93,23 @@ func TestParseDigest(t *testing.T) {
 			Input:     "sha384.foo+bar:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			Algorithm: "sha384.foo+bar",
 			Encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
-			Err:       digest. ErrDigestUnsupported,
+			Err:       digest.ErrDigestUnsupported,
 		},
 		{
 			Input:     "sha384_foo+bar:d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
 			Algorithm: "sha384_foo+bar",
 			Encoded:   "d3fc7881460b7e22e3d172954463dddd7866d17597e7248453c48b3e9d26d9596bf9c4a9cf8072c9d5bad76e19af801d",
-			Err:       digest. ErrDigestUnsupported,
+			Err:       digest.ErrDigestUnsupported,
 		},
 		{
 			Input:     "sha256+b64:LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564",
 			Algorithm: "sha256+b64",
 			Encoded:   "LCa0a2j_xo_5m0U8HTBBNBNCLXBkg7-g-YpeiGJm564",
-			Err:       digest. ErrDigestUnsupported,
+			Err:       digest.ErrDigestUnsupported,
 		},
 		{
 			Input: "sha256:E58FCF7418D4390DEC8E8FB69D88C06EC07039D651FEDD3AA72AF9972E7D046B",
-			Err:   digest. ErrDigestInvalidFormat,
+			Err:   digest.ErrDigestInvalidFormat,
 		},
 	})
 }
-
