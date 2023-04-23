@@ -91,15 +91,17 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		searchFunc func(int) bool
 		alg        digest.Algorithm
 		hex        string
+		dgst       digest.Digest
 	)
-	dgst, err := digest.Parse(d)
-	if err == digest.ErrDigestInvalidFormat {
+
+	dgst = digest.Digest(d)
+	if err := dgst.Validate(); err == digest.ErrDigestInvalidFormat {
 		hex = d
 		searchFunc = func(i int) bool {
 			return dst.entries[i].val >= d
 		}
-	} else {
-		hex = dgst.Hex()
+	} else { // Note: `err` is not necessarily `nil` here
+		hex = dgst.Encoded()
 		alg = dgst.Algorithm()
 		searchFunc = func(i int) bool {
 			if dst.entries[i].val == hex {
