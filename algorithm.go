@@ -39,9 +39,7 @@ const (
 	BLAKE3 Algorithm = "blake3"
 )
 
-var (
-	algorithmRegexp = regexp.MustCompile(`^[a-z0-9]+([+._-][a-z0-9]+)*$`)
-)
+var algorithmRegexp = regexp.MustCompile(`^[a-z0-9]+([+._-][a-z0-9]+)*$`)
 
 // CryptoHash is the interface that any hash algorithm must implement
 type CryptoHash interface {
