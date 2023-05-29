@@ -164,7 +164,7 @@ func (a Algorithm) Hash() hash.Hash {
 	if !a.Available() {
 		// Empty algorithm string is invalid
 		if a == "" {
-			panic(fmt.Sprintf("empty digest algorithm, validate before calling Algorithm.Hash()"))
+			panic("empty digest algorithm, validate before calling Algorithm.Hash()")
 		}
 
 		// NOTE(stevvooe): A missing hash is usually a programming error that
