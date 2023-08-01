@@ -118,7 +118,7 @@ func (d Digest) Validate() error {
 	return algorithm.Validate(encoded)
 }
 
-// Algorithm returns the algorithm portion of the digest. This will panic if
+// Algorithm returns the algorithm portion of the digest. It panics if
 // the underlying digest is not in a valid format.
 func (d Digest) Algorithm() Algorithm {
 	return Algorithm(d[:d.sepIndex()])
@@ -133,7 +133,7 @@ func (d Digest) Verifier() Verifier {
 	}
 }
 
-// Encoded returns the encoded portion of the digest. This will panic if the
+// Encoded returns the encoded portion of the digest. It panics if the
 // underlying digest is not in a valid format.
 func (d Digest) Encoded() string {
 	return string(d[d.sepIndex()+1:])
