@@ -83,38 +83,40 @@ func TestFroms(t *testing.T) {
 	}
 
 	for alg := range algorithms {
-		h := alg.Hash()
-		h.Write(p)
-		expected := Digest(fmt.Sprintf("%s:%x", alg, h.Sum(nil)))
+		t.Run(string(alg), func(t *testing.T) {
+			h := alg.Hash()
+			h.Write(p)
+			expected := Digest(fmt.Sprintf("%s:%x", alg, h.Sum(nil)))
 
-		var readerDgst Digest
-		readerDgst, err = alg.FromReader(bytes.NewReader(p))
-		if err != nil {
-			t.Fatalf("error calculating hash from reader: %v", err)
-		}
-
-		dgsts := []Digest{
-			alg.FromBytes(p),
-			alg.FromString(string(p)),
-			readerDgst,
-		}
-
-		if alg == Canonical {
-			readerDgst, err = FromReader(bytes.NewReader(p))
+			var readerDgst Digest
+			readerDgst, err = alg.FromReader(bytes.NewReader(p))
 			if err != nil {
 				t.Fatalf("error calculating hash from reader: %v", err)
 			}
 
-			dgsts = append(dgsts,
-				FromBytes(p),
-				FromString(string(p)),
-				readerDgst)
-		}
-		for _, dgst := range dgsts {
-			if dgst != expected {
-				t.Fatalf("unexpected digest %v != %v", dgst, expected)
+			dgsts := []Digest{
+				alg.FromBytes(p),
+				alg.FromString(string(p)),
+				readerDgst,
 			}
-		}
+
+			if alg == Canonical {
+				readerDgst, err = FromReader(bytes.NewReader(p))
+				if err != nil {
+					t.Fatalf("error calculating hash from reader: %v", err)
+				}
+
+				dgsts = append(dgsts,
+					FromBytes(p),
+					FromString(string(p)),
+					readerDgst)
+			}
+			for _, dgst := range dgsts {
+				if dgst != expected {
+					t.Errorf("unexpected digest %v != %v", dgst, expected)
+				}
+			}
+		})
 	}
 }
 
