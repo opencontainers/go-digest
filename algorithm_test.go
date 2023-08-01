@@ -77,13 +77,18 @@ func TestFlagInterface(t *testing.T) {
 
 func TestFroms(t *testing.T) {
 	p := make([]byte, 1<<20)
-	rand.Read(p)
+	_, err := rand.Read(p)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for alg := range algorithms {
 		h := alg.Hash()
 		h.Write(p)
 		expected := Digest(fmt.Sprintf("%s:%x", alg, h.Sum(nil)))
-		readerDgst, err := alg.FromReader(bytes.NewReader(p))
+
+		var readerDgst Digest
+		readerDgst, err = alg.FromReader(bytes.NewReader(p))
 		if err != nil {
 			t.Fatalf("error calculating hash from reader: %v", err)
 		}
@@ -95,7 +100,7 @@ func TestFroms(t *testing.T) {
 		}
 
 		if alg == Canonical {
-			readerDgst, err := FromReader(bytes.NewReader(p))
+			readerDgst, err = FromReader(bytes.NewReader(p))
 			if err != nil {
 				t.Fatalf("error calculating hash from reader: %v", err)
 			}
