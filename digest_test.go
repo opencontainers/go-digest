@@ -12,18 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testdigest
+package digest_test
 
 import (
-	_ "crypto/sha256"
-	_ "crypto/sha512"
 	"testing"
 
 	"github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest/testdigest"
 )
 
 func TestParseDigest(t *testing.T) {
-	RunTestCases(t, []TestCase{
+	testdigest.RunTestCases(t, []testdigest.TestCase{
 		{
 			Input:     "sha256:e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
 			Algorithm: "sha256",
