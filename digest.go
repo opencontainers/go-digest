@@ -103,14 +103,13 @@ func FromString(s string) Digest {
 // Validate checks that the contents of d is a valid digest, returning an
 // error if not.
 func (d Digest) Validate() error {
-	s := string(d)
-	i := strings.Index(s, ":")
-	if i <= 0 || i+1 == len(s) {
+	alg, encoded, ok := strings.Cut(string(d), ":")
+	if !ok || encoded == "" {
 		return ErrDigestInvalidFormat
 	}
-	algorithm, encoded := Algorithm(s[:i]), s[i+1:]
+	algorithm := Algorithm(alg)
 	if !algorithm.Available() {
-		if !DigestRegexpAnchored.MatchString(s) {
+		if !DigestRegexpAnchored.MatchString(string(d)) {
 			return ErrDigestInvalidFormat
 		}
 		return ErrDigestUnsupported
@@ -121,7 +120,11 @@ func (d Digest) Validate() error {
 // Algorithm returns the algorithm portion of the digest. It panics if
 // the underlying digest is not in a valid format.
 func (d Digest) Algorithm() Algorithm {
-	return Algorithm(d[:d.sepIndex()])
+	alg, _, ok := strings.Cut(string(d), ":")
+	if !ok {
+		panic(fmt.Sprintf("no ':' separator in digest %q", d))
+	}
+	return Algorithm(alg)
 }
 
 // Verifier returns a writer object that can be used to verify a stream of
@@ -136,7 +139,11 @@ func (d Digest) Verifier() Verifier {
 // Encoded returns the encoded portion of the digest. It panics if the
 // underlying digest is not in a valid format.
 func (d Digest) Encoded() string {
-	return string(d[d.sepIndex()+1:])
+	_, encoded, ok := strings.Cut(string(d), ":")
+	if !ok {
+		panic(fmt.Sprintf("no ':' separator in digest %q", d))
+	}
+	return encoded
 }
 
 // Hex returns the encoded portion of the digest. This will panic if the
@@ -149,14 +156,4 @@ func (d Digest) Hex() string {
 
 func (d Digest) String() string {
 	return string(d)
-}
-
-func (d Digest) sepIndex() int {
-	i := strings.Index(string(d), ":")
-
-	if i < 0 {
-		panic(fmt.Sprintf("no ':' separator in digest %q", d))
-	}
-
-	return i
 }
