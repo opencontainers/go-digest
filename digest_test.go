@@ -22,7 +22,7 @@ import (
 )
 
 func TestParseDigest(t *testing.T) {
-	testdigest.RunTestCases(t, []testdigest.TestCase{
+	tests := []testdigest.TestCase{
 		{
 			Input:     "sha256:e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",
 			Algorithm: "sha256",
@@ -110,5 +110,11 @@ func TestParseDigest(t *testing.T) {
 			Input: "sha256:E58FCF7418D4390DEC8E8FB69D88C06EC07039D651FEDD3AA72AF9972E7D046B",
 			Err:   digest.ErrDigestInvalidFormat,
 		},
-	})
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Input, func(t *testing.T) {
+			testdigest.RunTestCase(t, tc)
+		})
+	}
 }
