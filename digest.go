@@ -151,6 +151,16 @@ func (d Digest) String() string {
 	return string(d)
 }
 
+// IsIdenticalTo compares this digest to any other, inclusive of the hashing algorithm used
+func (d Digest) IsIdenticalTo(o Digest) bool {
+	return string(d) == string(o)
+}
+
+// IsEmpty does what it says (an empty digest is an empty string)
+func (d Digest) IsEmpty() bool {
+	return len(d) == 0
+}
+
 func (d Digest) sepIndex() int {
 	i := strings.Index(string(d), ":")
 
