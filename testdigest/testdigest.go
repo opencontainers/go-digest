@@ -69,11 +69,3 @@ func RunTestCase(t *testing.T, testcase TestCase) {
 		t.Fatalf("%v != %v", newFromHex, digest)
 	}
 }
-
-func RunTestCases(t *testing.T, testcases []TestCase) {
-	for _, testcase := range testcases {
-		t.Run(testcase.Input, func(t *testing.T) {
-			RunTestCase(t, testcase)
-		})
-	}
-}
