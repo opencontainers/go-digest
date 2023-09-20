@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/opencontainers/go-digest v0.0.0
-	github.com/zeebo/blake3 v0.1.1
+	github.com/zeebo/blake3 v0.2.2
 )
 
 replace github.com/opencontainers/go-digest => ../
