@@ -3,10 +3,13 @@ module github.com/opencontainers/go-digest/blake3
 go 1.18
 
 require (
-	github.com/opencontainers/go-digest v0.0.0
-	github.com/zeebo/blake3 v0.2.2
+	github.com/opencontainers/go-digest v1.0.0
+	github.com/zeebo/blake3 v0.2.3
 )
 
 replace github.com/opencontainers/go-digest => ../
 
-require golang.org/x/sys v0.0.0-20201014080544-cc95f250f6bc // indirect
+require (
+	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+)
