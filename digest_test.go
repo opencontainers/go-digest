@@ -15,6 +15,9 @@
 package digest_test
 
 import (
+	"encoding"
+	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/opencontainers/go-digest"
@@ -115,6 +118,81 @@ func TestParseDigest(t *testing.T) {
 		tc := tc
 		t.Run(tc.Input, func(t *testing.T) {
 			testdigest.RunTestCase(t, tc)
+		})
+	}
+}
+
+func TestDigestUnmarshalJSONValue(t *testing.T) {
+	var _ encoding.TextUnmarshaler = (*digest.Digest)(nil)
+
+	for _, tc := range []struct {
+		name          string
+		input         string
+		expectedValue string
+		expectedError error
+	}{
+		{
+			name:          "empty value",
+			input:         `{"digest":""}`,
+			expectedValue: "",
+			expectedError: nil,
+		},
+		{
+			name:          "no value",
+			input:         `{}`,
+			expectedValue: "",
+			expectedError: nil,
+		},
+		{
+			name:          "success",
+			input:         `{"digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}`,
+			expectedValue: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			expectedError: nil,
+		},
+		{
+			name:          "no colon",
+			input:         `{"digest":"no-colon"}`,
+			expectedError: digest.ErrDigestInvalidFormat,
+		},
+		{
+			name:          "invalid algorithm",
+			input:         `{"digest":"../../../../etc/issue:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}`,
+			expectedValue: "",
+			expectedError: digest.ErrDigestInvalidFormat,
+		},
+		{
+			name:          "invalid value",
+			input:         `{"digest":"sha256:../../../../etc/issue"}`,
+			expectedError: digest.ErrDigestInvalidLength,
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			var dest struct {
+				Digest digest.Digest `json:"digest"`
+			}
+			err := json.Unmarshal([]byte(tc.input), &dest)
+			if tc.expectedError != nil {
+				if err == nil || !errors.Is(err, tc.expectedError) {
+					t.Fatalf("Unexpected error %#v", err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("Unexpected error %#v", err)
+				}
+				if dest.Digest.String() != tc.expectedValue {
+					t.Fatalf("Unexpected value %q", dest.Digest.String())
+				}
+				if tc.expectedValue != "" {
+					// Just to be extra sure: The value is valid…
+					if err := dest.Digest.Validate(); err != nil {
+						t.Fatalf("Successfully unmarshaled invalid value: %v", err)
+					}
+					// … and does not panic
+					_ = dest.Digest.Algorithm()
+					_ = dest.Digest.Hex()
+				}
+			}
 		})
 	}
 }
