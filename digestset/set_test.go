@@ -16,6 +16,7 @@
 package digestset
 
 import (
+	"crypto"
 	"crypto/sha256"
 	"encoding/binary"
 	"math/rand"
@@ -135,6 +136,8 @@ func TestAddDuplication(t *testing.T) {
 		t.Fatal("Duplicate digest insert should not increase entries size")
 	}
 
+	// SHA-384 is not registered by default, but used in this test.
+	digest.RegisterAlgorithm(digest.SHA384, crypto.SHA384)
 	if err := dset.Add(digest.Digest("sha384:123451111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111")); err != nil {
 		t.Fatal(err)
 	}
