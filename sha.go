@@ -18,6 +18,5 @@ const (
 
 func init() {
 	RegisterAlgorithm(SHA256, crypto.SHA256)
-	RegisterAlgorithm(SHA384, crypto.SHA384)
 	RegisterAlgorithm(SHA512, crypto.SHA512)
 }
