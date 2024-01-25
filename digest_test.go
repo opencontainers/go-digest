@@ -15,6 +15,7 @@
 package digest_test
 
 import (
+	"crypto"
 	"testing"
 
 	"github.com/opencontainers/go-digest"
@@ -22,6 +23,9 @@ import (
 )
 
 func TestParseDigest(t *testing.T) {
+	// SHA-384 is not registered by default, but used in this test.
+	digest.RegisterAlgorithm(digest.SHA384, crypto.SHA384)
+
 	tests := []testdigest.TestCase{
 		{
 			Input:     "sha256:e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b",

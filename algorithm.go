@@ -34,10 +34,6 @@ func init() {
 	// by implementations.
 	RegisterAlgorithm(SHA256, crypto.SHA256)
 	RegisterAlgorithm(SHA512, crypto.SHA512)
-	// SHA384 is registered by default but is not part of the OCI image
-	// specification, and its use should be discouraged for reasons other
-	// than backward-compatibility.
-	RegisterAlgorithm(SHA384, crypto.SHA384)
 }
 
 // Algorithm identifies and implementation of a digester by an identifier.
@@ -83,9 +79,16 @@ const (
 
 	// SHA384 is the SHA-384 ([RFC 6234]) digest algorithm  with hex encoding
 	// (lower case only). Use of the SHA384 digest algorithm is not recommended,
-	// and the [Canonical] algorithm is preferred.
+	// for reasons other than backward-compatibility, and the [Canonical]
+	// algorithm is preferred.
+	//
+	// SHA384 is not part of the [OCI image specification], and not registered
+	// by default. Implementers must register it if needed;
+	//
+	//	RegisterAlgorithm(SHA384, crypto.SHA384)
 	//
 	// [RFC 6234]: https://datatracker.ietf.org/doc/html/rfc6234
+	// [OCI image specification]: https://github.com/opencontainers/image-spec/blob/v1.0.2/descriptor.md#registered-algorithms
 	SHA384 Algorithm = "sha384" // sha384 with hex encoding (lower case only)
 
 	// BLAKE3 is the [BLAKE3 algorithm] with the default 256-bit output size.
