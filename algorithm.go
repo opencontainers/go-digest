@@ -16,6 +16,11 @@
 package digest
 
 import (
+	"crypto"
+	// make sure crypto.SHA256 is registered
+	_ "crypto/sha256"
+	// make sure crypto.sha512 and crypto.SHA384 are registered
+	_ "crypto/sha512"
 	"fmt"
 	"hash"
 	"io"
@@ -23,19 +28,73 @@ import (
 	"sync"
 )
 
+func init() {
+	// Register algorithms that are registered in the OCI image specification
+	// by default. Additional algorithms are supported, but must be enabled
+	// by implementations.
+	RegisterAlgorithm(SHA256, crypto.SHA256)
+	RegisterAlgorithm(SHA512, crypto.SHA512)
+	// SHA384 is registered by default but is not part of the OCI image
+	// specification, and its use should be discouraged for reasons other
+	// than backward-compatibility.
+	RegisterAlgorithm(SHA384, crypto.SHA384)
+}
+
 // Algorithm identifies and implementation of a digester by an identifier.
 // Note the that this defines both the hash algorithm used and the string
 // encoding.
 type Algorithm string
 
-// supported digest types
+// List of supported algorithms for [digests].
+//
+// [Canonical] ([SHA256]) is the primary digest algorithm used. While the OCI
+// specification allows the use of a variety of cryptographic algorithms, compliant
+// implementations SHOULD use SHA-256, which is the [Canonical].
+//
+// The [SHA512] and [SHA384] algorithms are registered by default for compatibility
+// with existing implementations. Implementers must take note that SHA-384 is
+// not part of the [OCI image specification] and may not be supported by all
+// implementations. In general, SHA-512 SHA-384 is discouraged.
+//
+// The [BLAKE3] algorithm is optional and not enabled by default.
+//
+// [digests]: https://github.com/opencontainers/image-spec/blob/v1.0.2/descriptor.md#digests
+// [OCI image specification]: https://github.com/opencontainers/image-spec/blob/v1.0.2/descriptor.md#registered-algorithms
 const (
-	// Canonical is the primary digest algorithm used with the distribution
-	// project. Other digests may be used but this one is the primary storage
-	// digest.
+	// Canonical is an alias for [SHA256] and the primary digest algorithm used.
+	// Other digests may be used but this one is the primary storage digest, and
+	// recommended in the [OCI image specification].
+	//
+	// [OCI image specification]: https://github.com/opencontainers/image-spec/blob/v1.0.2/descriptor.md#registered-algorithms
 	Canonical = SHA256
-	// BLAKE3 is the blake3 algorithm with the default 256-bit output size
-	// github.com/opencontainers/go-digest/blake3 should be imported to make it available
+
+	// SHA256 is SHA-256 ([RFC 6234]) with hex encoding (lower case only). It is
+	// the [Canonical] algorithm, and enabled by default.
+	//
+	// [RFC 6234]: https://datatracker.ietf.org/doc/html/rfc6234
+	SHA256 Algorithm = "sha256" // sha256 with hex encoding (lower case only)
+
+	// SHA512 is the SHA-512 ([RFC 6234]) digest algorithm  with hex encoding
+	// (lower case only). It is enabled by default, but not recommended, and
+	// the [Canonical] algorithm is preferred.
+	//
+	// [RFC 6234]: https://datatracker.ietf.org/doc/html/rfc6234
+	SHA512 Algorithm = "sha512" // sha512 with hex encoding (lower case only)
+
+	// SHA384 is the SHA-384 ([RFC 6234]) digest algorithm  with hex encoding
+	// (lower case only). Use of the SHA384 digest algorithm is not recommended,
+	// and the [Canonical] algorithm is preferred.
+	//
+	// [RFC 6234]: https://datatracker.ietf.org/doc/html/rfc6234
+	SHA384 Algorithm = "sha384" // sha384 with hex encoding (lower case only)
+
+	// BLAKE3 is the [BLAKE3 algorithm] with the default 256-bit output size.
+	//
+	// This algorithm is not registered by default, and implementers must import
+	// the [github.com/opencontainers/go-digest/blake3] package to make it
+	// available.
+	//
+	// [BLAKE3 algorithm]: https://github.com/BLAKE3-team/BLAKE3-specs/tree/update1
 	BLAKE3 Algorithm = "blake3"
 )
 
