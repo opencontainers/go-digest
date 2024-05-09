@@ -157,3 +157,21 @@ func (d Digest) Hex() string {
 func (d Digest) String() string {
 	return string(d)
 }
+
+// UnmarshalText implements encoding.TextUnmarshaler (and affects encoding/json unmarshaling)
+//
+// This enforces that unmarshaled values are valid; otherwise Go would allow setting a Digest value to arbitrary strings,
+// causing a later panic or other misuse if users forget to call Validate().
+func (d *Digest) UnmarshalText(text []byte) error {
+	if len(text) == 0 { // This frequently happens in `json:",omitempty"` fields, and users are presumably ready to handle that.
+		*d = ""
+		return nil
+	}
+
+	value, err := Parse(string(text))
+	if err != nil {
+		return err
+	}
+	*d = value
+	return nil
+}
