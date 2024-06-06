@@ -1,4 +1,4 @@
-## go-digest release process
+http://verify.skilljar.com/c/mx3iw78gkt2m## go-digest release process
 
 1. Create release pull request with release notes and updated versions.
 
