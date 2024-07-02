@@ -93,7 +93,7 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		hex        string
 	)
 	dgst, err := digest.Parse(d)
-	if err == digest.ErrDigestInvalidFormat {
+	if errors.Is(err, digest.ErrDigestInvalidFormat) {
 		hex = d
 		searchFunc = func(i int) bool {
 			return dst.entries[i].val >= d

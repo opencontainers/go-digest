@@ -20,6 +20,7 @@
 package testdigest
 
 import (
+	"errors"
 	"testing"
 
 	pkgdigest "github.com/opencontainers/go-digest"
@@ -38,7 +39,7 @@ type TestCase struct {
 
 func RunTestCase(t *testing.T, testcase TestCase) {
 	digest, err := pkgdigest.Parse(testcase.Input)
-	if err != testcase.Err {
+	if errors.Is(err, testcase.Err) {
 		t.Fatalf("error differed from expected while parsing %q: %v != %v", testcase.Input, err, testcase.Err)
 	}
 
