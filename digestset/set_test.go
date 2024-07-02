@@ -21,7 +21,7 @@ import (
 	"math/rand"
 	"testing"
 
-	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 )
 
 func assertEqualDigests(t *testing.T, d1, d2 digest.Digest) {

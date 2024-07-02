@@ -21,7 +21,7 @@ import (
 	"strings"
 	"sync"
 
-	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 )
 
 var (
