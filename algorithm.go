@@ -138,12 +138,12 @@ func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
 	algorithmsLock.Lock()
 	defer algorithmsLock.Unlock()
 
-	if !algorithmRegexp.MatchString(string(algorithm)) {
-		panic(fmt.Sprintf("Algorithm %s has a name which does not fit within the allowed grammar", algorithm))
-	}
-
 	if _, ok := algorithms[algorithm]; ok {
 		return false
+	}
+
+	if !algorithmRegexp.MatchString(string(algorithm)) {
+		panic(fmt.Sprintf("Algorithm %s has a name which does not fit within the allowed grammar", algorithm))
 	}
 
 	algorithms[algorithm] = implementation
