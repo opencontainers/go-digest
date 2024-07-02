@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// testdigest is a separate package, because it has some testing utilities in it that may be useful
-// to other internal Algorithm implementors.
+// Package testdigest is a separate package, because it has some testing
+// utilities that may be useful to other internal Algorithm implementors.
 //
-// It is not a stable interface and not meant for consumption outside of digest developers.
-
+// It is not a stable interface and not meant for consumption outside of
+// digest developers.
 package testdigest
 
 import (
+	"errors"
 	"testing"
 
-	pkgdigest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/go-digest"
 )
 
 type TestCase struct {
@@ -31,14 +32,14 @@ type TestCase struct {
 	// If err is non-nil, then the parsing of Input is expected to return this error
 	Err error
 	// Algorithm should be an available or registered algorithm
-	Algorithm pkgdigest.Algorithm
+	Algorithm digest.Algorithm
 	// Encoded is the the encoded portion of the digest to expect, for example e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b
 	Encoded string
 }
 
 func RunTestCase(t *testing.T, testcase TestCase) {
-	digest, err := pkgdigest.Parse(testcase.Input)
-	if err != testcase.Err {
+	dgst, err := digest.Parse(testcase.Input)
+	if !errors.Is(err, testcase.Err) {
 		t.Fatalf("error differed from expected while parsing %q: %v != %v", testcase.Input, err, testcase.Err)
 	}
 
@@ -46,26 +47,26 @@ func RunTestCase(t *testing.T, testcase TestCase) {
 		return
 	}
 
-	if digest.Algorithm() != testcase.Algorithm {
-		t.Fatalf("incorrect Algorithm for parsed digest: %q != %q", digest.Algorithm(), testcase.Algorithm)
+	if dgst.Algorithm() != testcase.Algorithm {
+		t.Fatalf("incorrect Algorithm for parsed digest: %q != %q", dgst.Algorithm(), testcase.Algorithm)
 	}
 
-	if digest.Encoded() != testcase.Encoded {
-		t.Fatalf("incorrect hex for parsed digest: %q != %q", digest.Encoded(), testcase.Encoded)
+	if dgst.Encoded() != testcase.Encoded {
+		t.Fatalf("incorrect hex for parsed digest: %q != %q", dgst.Encoded(), testcase.Encoded)
 	}
 
 	// Parse string return value and check equality
-	newParsed, err := pkgdigest.Parse(digest.String())
+	newParsed, err := digest.Parse(dgst.String())
 	if err != nil {
 		t.Fatalf("unexpected error parsing Input %q: %v", testcase.Input, err)
 	}
 
-	if newParsed != digest {
-		t.Fatalf("expected equal: %q != %q", newParsed, digest)
+	if newParsed != dgst {
+		t.Fatalf("expected equal: %q != %q", newParsed, dgst)
 	}
 
-	newFromHex := pkgdigest.NewDigestFromEncoded(newParsed.Algorithm(), newParsed.Encoded())
-	if newFromHex != digest {
-		t.Fatalf("%v != %v", newFromHex, digest)
+	newFromHex := digest.NewDigestFromEncoded(newParsed.Algorithm(), newParsed.Encoded())
+	if newFromHex != dgst {
+		t.Fatalf("%v != %v", newFromHex, dgst)
 	}
 }

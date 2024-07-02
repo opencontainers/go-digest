@@ -15,6 +15,7 @@
 package digest_test
 
 import (
+	"crypto/sha256"
 	"testing"
 
 	"github.com/opencontainers/go-digest"
@@ -116,5 +117,23 @@ func TestParseDigest(t *testing.T) {
 		t.Run(tc.Input, func(t *testing.T) {
 			testdigest.RunTestCase(t, tc)
 		})
+	}
+}
+
+func BenchmarkNewDigestFromEncoded(b *testing.B) {
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = digest.NewDigestFromEncoded("sha256", "e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b")
+	}
+}
+
+func BenchmarkNewDigestFromBytes(b *testing.B) {
+	s := sha256.Sum256([]byte("hello world"))
+
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = digest.NewDigestFromBytes("sha256", s[:])
 	}
 }

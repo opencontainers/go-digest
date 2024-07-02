@@ -138,12 +138,12 @@ func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
 	algorithmsLock.Lock()
 	defer algorithmsLock.Unlock()
 
-	if !algorithmRegexp.MatchString(string(algorithm)) {
-		panic(fmt.Sprintf("Algorithm %s has a name which does not fit within the allowed grammar", algorithm))
-	}
-
 	if _, ok := algorithms[algorithm]; ok {
 		return false
+	}
+
+	if !algorithmRegexp.MatchString(string(algorithm)) {
+		panic(fmt.Sprintf("Algorithm %s has a name which does not fit within the allowed grammar", algorithm))
 	}
 
 	algorithms[algorithm] = implementation
@@ -156,8 +156,8 @@ func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
 
 // hexDigestRegex can be used to generate a regex for RegisterAlgorithm.
 func hexDigestRegex(cryptoHash CryptoHash) *regexp.Regexp {
-	hexdigestbytes := cryptoHash.Size() * 2
-	return regexp.MustCompile(fmt.Sprintf("^[a-f0-9]{%d}$", hexdigestbytes))
+	hexDigestBytes := cryptoHash.Size() * 2
+	return regexp.MustCompile(fmt.Sprintf("^[a-f0-9]{%d}$", hexDigestBytes))
 }
 
 // Available returns true if the digest type is available for use. If this
@@ -254,20 +254,18 @@ func (a Algorithm) Encode(d []byte) string {
 
 // FromReader returns the digest of the reader using the algorithm.
 func (a Algorithm) FromReader(rd io.Reader) (Digest, error) {
-	digester := a.Digester()
-
-	if _, err := io.Copy(digester.Hash(), rd); err != nil {
+	d := a.Digester()
+	if _, err := io.Copy(d.Hash(), rd); err != nil {
 		return "", err
 	}
 
-	return digester.Digest(), nil
+	return d.Digest(), nil
 }
 
 // FromBytes digests the input and returns a Digest.
 func (a Algorithm) FromBytes(p []byte) Digest {
-	digester := a.Digester()
-
-	if _, err := digester.Hash().Write(p); err != nil {
+	d := a.Digester()
+	if _, err := d.Hash().Write(p); err != nil {
 		// Writes to a Hash should never fail. None of the existing
 		// hash implementations in the stdlib or hashes vendored
 		// here can return errors from Write. Having a panic in this
@@ -276,7 +274,7 @@ func (a Algorithm) FromBytes(p []byte) Digest {
 		panic("write to hash function returned error: " + err.Error())
 	}
 
-	return digester.Digest()
+	return d.Digest()
 }
 
 // FromString digests the string input and returns a Digest.
