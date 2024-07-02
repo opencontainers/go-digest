@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// testdigest is a separate package, because it has some testing utilities in it that may be useful
-// to other internal Algorithm implementors.
+// Package testdigest is a separate package, because it has some testing
+// utilities that may be useful to other internal Algorithm implementors.
 //
-// It is not a stable interface and not meant for consumption outside of digest developers.
-
+// It is not a stable interface and not meant for consumption outside of
+// digest developers.
 package testdigest
 
 import (
