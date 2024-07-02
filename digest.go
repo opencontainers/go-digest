@@ -47,19 +47,19 @@ func NewDigest(alg Algorithm, h hash.Hash) Digest {
 // functions. This is also useful for rebuilding digests from binary
 // serializations.
 func NewDigestFromBytes(alg Algorithm, p []byte) Digest {
-	return NewDigestFromEncoded(alg, alg.Encode(p))
+	return Digest(string(alg) + ":" + alg.Encode(p))
 }
 
 // NewDigestFromHex returns a Digest from alg and the hex encoded digest.
 //
 // Deprecated: use [NewDigestFromEncoded] instead.
 func NewDigestFromHex(alg, hex string) Digest {
-	return NewDigestFromEncoded(Algorithm(alg), hex)
+	return Digest(alg + ":" + hex)
 }
 
 // NewDigestFromEncoded returns a Digest from alg and the encoded digest.
 func NewDigestFromEncoded(alg Algorithm, encoded string) Digest {
-	return Digest(fmt.Sprintf("%s:%s", alg, encoded))
+	return Digest(string(alg) + ":" + encoded)
 }
 
 // DigestRegexp matches valid digest types.
