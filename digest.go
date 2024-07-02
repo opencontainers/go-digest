@@ -16,6 +16,7 @@
 package digest
 
 import (
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -69,13 +70,13 @@ var DigestRegexpAnchored = regexp.MustCompile(`^` + DigestRegexp.String() + `$`)
 
 var (
 	// ErrDigestInvalidFormat returned when digest format invalid.
-	ErrDigestInvalidFormat = fmt.Errorf("invalid checksum digest format")
+	ErrDigestInvalidFormat = errors.New("invalid checksum digest format")
 
 	// ErrDigestInvalidLength returned when digest has invalid length.
-	ErrDigestInvalidLength = fmt.Errorf("invalid checksum digest length")
+	ErrDigestInvalidLength = errors.New("invalid checksum digest length")
 
 	// ErrDigestUnsupported returned when the digest algorithm is unsupported.
-	ErrDigestUnsupported = fmt.Errorf("unsupported digest algorithm")
+	ErrDigestUnsupported = errors.New("unsupported digest algorithm")
 )
 
 // Parse parses s and returns the validated digest object. An error will
