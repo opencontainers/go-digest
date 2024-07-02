@@ -257,6 +257,7 @@ func createDigests(count int) ([]digest.Digest, error) {
 }
 
 func benchAddNTable(b *testing.B, n int) {
+	b.ReportAllocs()
 	digests, err := createDigests(n)
 	if err != nil {
 		b.Fatal(err)
@@ -273,6 +274,7 @@ func benchAddNTable(b *testing.B, n int) {
 }
 
 func benchLookupNTable(b *testing.B, n int, shortLen int) {
+	b.ReportAllocs()
 	digests, err := createDigests(n)
 	if err != nil {
 		b.Fatal(err)
@@ -297,6 +299,7 @@ func benchLookupNTable(b *testing.B, n int, shortLen int) {
 }
 
 func benchRemoveNTable(b *testing.B, n int) {
+	b.ReportAllocs()
 	digests, err := createDigests(n)
 	if err != nil {
 		b.Fatal(err)
@@ -320,6 +323,7 @@ func benchRemoveNTable(b *testing.B, n int) {
 }
 
 func benchShortCodeNTable(b *testing.B, n int, shortLen int) {
+	b.ReportAllocs()
 	digests, err := createDigests(n)
 	if err != nil {
 		b.Fatal(err)
