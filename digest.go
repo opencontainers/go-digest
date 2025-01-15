@@ -16,6 +16,7 @@
 package digest
 
 import (
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -46,19 +47,19 @@ func NewDigest(alg Algorithm, h hash.Hash) Digest {
 // functions. This is also useful for rebuilding digests from binary
 // serializations.
 func NewDigestFromBytes(alg Algorithm, p []byte) Digest {
-	return NewDigestFromEncoded(alg, alg.Encode(p))
+	return Digest(string(alg) + ":" + alg.Encode(p))
 }
 
 // NewDigestFromHex returns a Digest from alg and the hex encoded digest.
 //
 // Deprecated: use [NewDigestFromEncoded] instead.
 func NewDigestFromHex(alg, hex string) Digest {
-	return NewDigestFromEncoded(Algorithm(alg), hex)
+	return Digest(alg + ":" + hex)
 }
 
 // NewDigestFromEncoded returns a Digest from alg and the encoded digest.
 func NewDigestFromEncoded(alg Algorithm, encoded string) Digest {
-	return Digest(fmt.Sprintf("%s:%s", alg, encoded))
+	return Digest(string(alg) + ":" + encoded)
 }
 
 // DigestRegexp matches valid digest types.
@@ -69,13 +70,13 @@ var DigestRegexpAnchored = regexp.MustCompile(`^` + DigestRegexp.String() + `$`)
 
 var (
 	// ErrDigestInvalidFormat returned when digest format invalid.
-	ErrDigestInvalidFormat = fmt.Errorf("invalid checksum digest format")
+	ErrDigestInvalidFormat = errors.New("invalid checksum digest format")
 
 	// ErrDigestInvalidLength returned when digest has invalid length.
-	ErrDigestInvalidLength = fmt.Errorf("invalid checksum digest length")
+	ErrDigestInvalidLength = errors.New("invalid checksum digest length")
 
 	// ErrDigestUnsupported returned when the digest algorithm is unsupported.
-	ErrDigestUnsupported = fmt.Errorf("unsupported digest algorithm")
+	ErrDigestUnsupported = errors.New("unsupported digest algorithm")
 )
 
 // Parse parses s and returns the validated digest object. An error will

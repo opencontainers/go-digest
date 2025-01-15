@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/rand"
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -56,7 +57,7 @@ func TestFlagInterface(t *testing.T) {
 	} {
 		t.Run(testcase.Name, func(t *testing.T) {
 			alg = Canonical
-			if err := flagSet.Parse(testcase.Args); err != testcase.Err {
+			if err := flagSet.Parse(testcase.Args); !errors.Is(err, testcase.Err) {
 				if testcase.Err == nil {
 					t.Fatal("unexpected error", err)
 				}
