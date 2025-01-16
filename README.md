@@ -1,10 +1,13 @@
 # go-digest
 
-[![GoDoc](https://godoc.org/github.com/opencontainers/go-digest?status.svg)](https://godoc.org/github.com/opencontainers/go-digest) [![Go Report Card](https://goreportcard.com/badge/github.com/opencontainers/go-digest)](https://goreportcard.com/report/github.com/opencontainers/go-digest) [![Build Status](https://travis-ci.org/opencontainers/go-digest.svg?branch=master)](https://travis-ci.org/opencontainers/go-digest)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Go Reference](https://pkg.go.dev/badge/opencontainers/go-digest)](https://pkg.go.dev/github.com/opencontainers/go-digest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/opencontainers/go-digest)](https://goreportcard.com/report/github.com/opencontainers/go-digest)
+[![CI](https://github.com/opencontainers/go-digest/actions/workflows/test.yml/badge.svg)](https://github.com/opencontainers/go-digest/actions/workflows/test.yml)
 
 Common digest package used across the container ecosystem.
 
-Please see the [godoc](https://godoc.org/github.com/opencontainers/go-digest) for more information.
+Please see the [pkg.go.dev](https://pkg.go.dev/github.com/opencontainers/go-digest) for more information.
 
 # What is a digest?
 
