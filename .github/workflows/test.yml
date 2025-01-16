@@ -1,5 +1,16 @@
-on: [push, pull_request]
 name: Test
+
+# Default to 'contents: read', which grants actions to read commits.
+#
+# If any permission is set, any permission not included in the list is
+# implicitly set to "none".
+#
+# see https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
+permissions:
+  contents: read
+
+on: [push, pull_request]
+
 jobs:
   test:
     strategy:
@@ -16,6 +27,14 @@ jobs:
         uses: actions/checkout@v4
       - name: Test
         run: go test -v ./...
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.63
       - name: Test Blake3
         run: go test -v ./...
         working-directory: blake3
+      - name: Lint Blake3
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.63
