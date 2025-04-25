@@ -41,6 +41,8 @@ func TestParseDigest(t *testing.T) {
 		{
 			Input:     "blake3:af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
 			Algorithm: "blake3",
+			Encoded:   "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+		},
 		{
 			// empty
 			Input: "",
@@ -88,11 +90,11 @@ func TestParseDigest(t *testing.T) {
 		},
 		{
 			// too short (from different algorithm)
-			input: "blake3:abcdef0123456789abcdef0123456789abcdef01234",
-			Err:   diest.ErrDigestInvalidLength,
+			Input: "blake3:abcdef0123456789abcdef0123456789abcdef01234",
+			Err:   digest.ErrDigestInvalidLength,
 		},
 		{
-			input: "foo:d41d8cd98f00b204e9800998ecf8427e",
+			Input: "foo:d41d8cd98f00b204e9800998ecf8427e",
 			Err:   digest.ErrDigestUnsupported,
 		},
 		{

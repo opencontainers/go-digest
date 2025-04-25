@@ -22,9 +22,6 @@ import (
 const (
 	// Blake3 is the blake3 algorithm with the default 256-bit output size
 	Blake3 Algorithm = "blake3"
-
-	// BLAKE3 is deprecated. Use the symbol "Blake3" instead.
-	BLAKE3 = Blake3
 )
 
 func init() {
