@@ -25,12 +25,18 @@ import (
 
 func TestDigestVerifier(t *testing.T) {
 	p := make([]byte, 1<<20)
-	rand.Read(p)
+	_, err := rand.Read(p)
+	if err != nil {
+		t.Fatal(err)
+	}
 	digest := FromBytes(p)
 
 	verifier := digest.Verifier()
 
-	io.Copy(verifier, bytes.NewReader(p))
+	_, err = io.Copy(verifier, bytes.NewReader(p))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if !verifier.Verified() {
 		t.Fatalf("bytes not verified")
