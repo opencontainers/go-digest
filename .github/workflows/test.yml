@@ -6,20 +6,25 @@ permissions:
 
 jobs:
   test:
+    name: ${{ matrix.platform }} / ${{ matrix.go-version || 'minimum' }}
     strategy:
       matrix:
-        go-version: [1.18.x, 1.19.x, 1.20.x, 1.21.x, 1.22.x, 1.23.x, 1.24.x, 1.25.x, 1.26.x]
+        go-version:
+          - "" # leave empty to use go-version-file (use go.mod); see https://github.com/actions/setup-go/issues/450#issuecomment-3620402646
+          - oldstable
+          - stable
         platform: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     env:
       GOTOOLCHAIN: local
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
       - name: Install Go
         uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go-version }}
-      - name: Checkout code
-        uses: actions/checkout@v7
+          go-version-file: go.mod # used when go-version is empty.
       - name: Test
         run: go test -v ./...
       - name: Lint
