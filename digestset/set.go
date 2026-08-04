@@ -109,17 +109,30 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		}
 	}
 	idx := sort.Search(len(dst.entries), searchFunc)
-	if idx == len(dst.entries) || !checkShortMatch(dst.entries[idx].alg, dst.entries[idx].val, string(alg), hex) {
+
+	// Entries whose value has hex as a prefix form a contiguous run starting
+	// at idx. Digests of a different algorithm may sort within that run, so a
+	// second matching entry is not necessarily adjacent to the first; scan the
+	// whole run instead of only inspecting idx and idx+1.
+	var match *digestEntry
+	for i := idx; i < len(dst.entries) && strings.HasPrefix(dst.entries[i].val, hex); i++ {
+		if !checkShortMatch(dst.entries[i].alg, dst.entries[i].val, string(alg), hex) {
+			continue
+		}
+		if dst.entries[i].alg == alg && dst.entries[i].val == hex {
+			// An exact whole-value match is unambiguous.
+			return dst.entries[i].digest, nil
+		}
+		if match != nil {
+			return "", ErrDigestAmbiguous
+		}
+		match = dst.entries[i]
+	}
+	if match == nil {
 		return "", ErrDigestNotFound
 	}
-	if dst.entries[idx].alg == alg && dst.entries[idx].val == hex {
-		return dst.entries[idx].digest, nil
-	}
-	if idx+1 < len(dst.entries) && checkShortMatch(dst.entries[idx+1].alg, dst.entries[idx+1].val, string(alg), hex) {
-		return "", ErrDigestAmbiguous
-	}
 
-	return dst.entries[idx].digest, nil
+	return match.digest, nil
 }
 
 // Add adds the given digest to the set. An error will be returned
