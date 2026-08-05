@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"math/rand"
+	"strings"
 	"testing"
 
 	"github.com/opencontainers/go-digest"
@@ -390,4 +391,32 @@ func BenchmarkShortCode100(b *testing.B) {
 
 func BenchmarkShortCode1000(b *testing.B) {
 	benchShortCodeNTable(b, 1000, 12)
+}
+
+// TestLookupAmbiguousAcrossAlgorithms verifies that an algorithm-scoped short
+// code is reported as ambiguous even when a digest of a different algorithm
+// sorts between the two matching entries. The two sha256 digests below share
+// the prefix "1234", so "sha256:1234" is ambiguous (see TestLookup). The sha512
+// digest's value also starts with "1234" and sorts lexically between them.
+func TestLookupAmbiguousAcrossAlgorithms(t *testing.T) {
+	sha256A := digest.Digest("sha256:1234" + strings.Repeat("0", 60))
+	sha256C := digest.Digest("sha256:1234" + strings.Repeat("1", 60))
+	sha512B := digest.Digest("sha512:12340" + strings.Repeat("5", 123))
+
+	dset := NewSet()
+	for _, d := range []digest.Digest{sha256A, sha512B, sha256C} {
+		if err := dset.Add(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if _, err := dset.Lookup("sha256:1234"); err != ErrDigestAmbiguous {
+		t.Fatalf("Lookup(%q) = %v; want ErrDigestAmbiguous", "sha256:1234", err)
+	}
+
+	// A different-algorithm entry that sorts first in the prefix run must not
+	// hide the matching entries either.
+	if _, err := dset.Lookup("sha512:12340"); err != nil {
+		t.Fatalf("Lookup(%q) = %v; want the sha512 digest", "sha512:12340", err)
+	}
 }
