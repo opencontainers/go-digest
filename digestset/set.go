@@ -77,27 +77,25 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		return "", ErrDigestNotFound
 	}
 	var (
-		searchFunc func(int) bool
-		alg        digest.Algorithm
-		hexPrefix  string
+		idx       int
+		alg       digest.Algorithm
+		hexPrefix string
 	)
-	dgst, err := digest.Parse(d)
-	if errors.Is(err, digest.ErrDigestInvalidFormat) {
+	if dgst, err := digest.Parse(d); errors.Is(err, digest.ErrDigestInvalidFormat) {
 		hexPrefix = d
-		searchFunc = func(i int) bool {
+		idx = sort.Search(len(dst.entries), func(i int) bool {
 			return dst.entries[i].val >= d
-		}
+		})
 	} else {
 		hexPrefix = dgst.Encoded()
 		alg = dgst.Algorithm()
-		searchFunc = func(i int) bool {
+		idx = sort.Search(len(dst.entries), func(i int) bool {
 			if dst.entries[i].val == hexPrefix {
 				return dst.entries[i].alg >= alg
 			}
 			return dst.entries[i].val >= hexPrefix
-		}
+		})
 	}
-	idx := sort.Search(len(dst.entries), searchFunc)
 
 	// Entries whose value have hexPrefix as a prefix form a contiguous run starting
 	// at idx. Digests of a different algorithm may sort within that run, so a
@@ -134,13 +132,12 @@ func (dst *Set) Add(d digest.Digest) error {
 	dst.mutex.Lock()
 	defer dst.mutex.Unlock()
 	entry := &digestEntry{alg: d.Algorithm(), val: d.Encoded(), digest: d}
-	searchFunc := func(i int) bool {
+	idx := sort.Search(len(dst.entries), func(i int) bool {
 		if dst.entries[i].val == entry.val {
 			return dst.entries[i].alg >= entry.alg
 		}
 		return dst.entries[i].val >= entry.val
-	}
-	idx := sort.Search(len(dst.entries), searchFunc)
+	})
 	if idx == len(dst.entries) {
 		dst.entries = append(dst.entries, entry)
 		return nil
@@ -165,13 +162,12 @@ func (dst *Set) Remove(d digest.Digest) error {
 	dst.mutex.Lock()
 	defer dst.mutex.Unlock()
 	entry := &digestEntry{alg: d.Algorithm(), val: d.Encoded(), digest: d}
-	searchFunc := func(i int) bool {
+	idx := sort.Search(len(dst.entries), func(i int) bool {
 		if dst.entries[i].val == entry.val {
 			return dst.entries[i].alg >= entry.alg
 		}
 		return dst.entries[i].val >= entry.val
-	}
-	idx := sort.Search(len(dst.entries), searchFunc)
+	})
 	// Not found if idx is after or value at idx is not digest
 	if idx == len(dst.entries) || dst.entries[idx].digest != d {
 		return nil
