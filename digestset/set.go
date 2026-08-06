@@ -58,14 +58,6 @@ func NewSet() *Set {
 	return &Set{}
 }
 
-// checkShortMatch checks whether two digests match as either whole
-// values or short values. This function does not test equality,
-// rather whether the second value could match against the first
-// value.
-func checkShortMatch(alg digest.Algorithm, hex, shortAlg, shortHex string) bool {
-	return (shortAlg == "" || alg == digest.Algorithm(shortAlg)) && strings.HasPrefix(hex, shortHex)
-}
-
 // Lookup looks for a digest matching the given string representation.
 // If no digests could be found ErrDigestNotFound will be returned
 // with an empty digest value. If multiple matches are found
@@ -106,11 +98,12 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		if !strings.HasPrefix(entry.val, hexPrefix) {
 			break
 		}
-		if !checkShortMatch(entry.alg, entry.val, string(alg), hexPrefix) {
+		if alg != "" && entry.alg != alg {
+			// Non-matching algorithm.
 			continue
 		}
-		if entry.alg == alg && entry.val == hexPrefix {
-			// An exact whole-value match is unambiguous.
+		if entry.val == hexPrefix {
+			// An exact encoded-value match is unambiguous.
 			return entry.digest, nil
 		}
 		if match != "" {
