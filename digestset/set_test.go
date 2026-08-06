@@ -44,7 +44,7 @@ func TestLookup(t *testing.T) {
 		"sha256:6532111111111111111111111111111111111111111111111111111111111111",
 	}
 
-	dset := NewSet()
+	var dset Set
 	for i := range digests {
 		if err := dset.Add(digests[i]); err != nil {
 			t.Fatal(err)
@@ -118,7 +118,7 @@ func TestAddDuplication(t *testing.T) {
 		"sha512:65321111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
 	}
 
-	dset := NewSet()
+	var dset Set
 	for i := range digests {
 		if err := dset.Add(digests[i]); err != nil {
 			t.Fatal(err)
@@ -154,7 +154,7 @@ func TestRemove(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dset := NewSet()
+	var dset Set
 	for i := range digests {
 		if err := dset.Add(digests[i]); err != nil {
 			t.Fatal(err)
@@ -225,14 +225,14 @@ func TestShortCodeTable(t *testing.T) {
 		"sha256:6532111111111111111111111111111111111111111111111111111111111111",
 	}
 
-	dset := NewSet()
+	var dset Set
 	for i := range digests {
 		if err := dset.Add(digests[i]); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	dump := ShortCodeTable(dset, 2)
+	dump := ShortCodeTable(&dset, 2)
 
 	if len(dump) < len(digests) {
 		t.Fatalf("Error unexpected size: %d, expecting %d", len(dump), len(digests))

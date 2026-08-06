@@ -35,15 +35,15 @@ var (
 	ErrDigestAmbiguous = errors.New("ambiguous digest string")
 )
 
-// Set is used to hold a unique set of digests which
-// may be easily referenced by easily  referenced by a string
-// representation of the digest as well as short representation.
-// The uniqueness of the short representation is based on other
-// digests in the set. If digests are omitted from this set,
-// collisions in a larger set may not be detected, therefore it
-// is important to always do short representation lookups on
-// the complete set of digests. To mitigate collisions, an
-// appropriately long short code should be used.
+// Set holds a unique set of digests that may be referenced by their full or
+// shortened string representation.
+//
+// The uniqueness of a shortened representation depends on the other digests
+// in the set. If digests are omitted, collisions in a larger set may not be
+// detected. Short representation lookups should therefore always use the
+// complete set of digests and an appropriately long short code.
+//
+// The zero value of Set is ready for use.
 type Set struct {
 	mutex   sync.RWMutex
 	entries []*digestEntry
@@ -51,6 +51,9 @@ type Set struct {
 
 // NewSet creates an empty set of digests
 // which may have digests added.
+//
+// In most cases, new([Set]) (or just declaring a [Set] variable) is
+// sufficient to initialize a [Set].
 func NewSet() *Set {
 	return &Set{}
 }
