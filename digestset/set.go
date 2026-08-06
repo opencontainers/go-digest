@@ -79,36 +79,36 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 	var (
 		searchFunc func(int) bool
 		alg        digest.Algorithm
-		hex        string
+		hexPrefix  string
 	)
 	dgst, err := digest.Parse(d)
 	if errors.Is(err, digest.ErrDigestInvalidFormat) {
-		hex = d
+		hexPrefix = d
 		searchFunc = func(i int) bool {
 			return dst.entries[i].val >= d
 		}
 	} else {
-		hex = dgst.Encoded()
+		hexPrefix = dgst.Encoded()
 		alg = dgst.Algorithm()
 		searchFunc = func(i int) bool {
-			if dst.entries[i].val == hex {
+			if dst.entries[i].val == hexPrefix {
 				return dst.entries[i].alg >= alg
 			}
-			return dst.entries[i].val >= hex
+			return dst.entries[i].val >= hexPrefix
 		}
 	}
 	idx := sort.Search(len(dst.entries), searchFunc)
 
-	// Entries whose value has hex as a prefix form a contiguous run starting
+	// Entries whose value have hexPrefix as a prefix form a contiguous run starting
 	// at idx. Digests of a different algorithm may sort within that run, so a
 	// second matching entry is not necessarily adjacent to the first; scan the
 	// whole run instead of only inspecting idx and idx+1.
 	var match *digestEntry
-	for i := idx; i < len(dst.entries) && strings.HasPrefix(dst.entries[i].val, hex); i++ {
-		if !checkShortMatch(dst.entries[i].alg, dst.entries[i].val, string(alg), hex) {
+	for i := idx; i < len(dst.entries) && strings.HasPrefix(dst.entries[i].val, hexPrefix); i++ {
+		if !checkShortMatch(dst.entries[i].alg, dst.entries[i].val, string(alg), hexPrefix) {
 			continue
 		}
-		if dst.entries[i].alg == alg && dst.entries[i].val == hex {
+		if dst.entries[i].alg == alg && dst.entries[i].val == hexPrefix {
 			// An exact whole-value match is unambiguous.
 			return dst.entries[i].digest, nil
 		}
