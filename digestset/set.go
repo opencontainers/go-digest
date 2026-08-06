@@ -101,25 +101,28 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 	// at idx. Digests of a different algorithm may sort within that run, so a
 	// second matching entry is not necessarily adjacent to the first; scan the
 	// whole run instead of only inspecting idx and idx+1.
-	var match *digestEntry
-	for i := idx; i < len(dst.entries) && strings.HasPrefix(dst.entries[i].val, hexPrefix); i++ {
-		if !checkShortMatch(dst.entries[i].alg, dst.entries[i].val, string(alg), hexPrefix) {
+	var match digest.Digest
+	for _, entry := range dst.entries[idx:] {
+		if !strings.HasPrefix(entry.val, hexPrefix) {
+			break
+		}
+		if !checkShortMatch(entry.alg, entry.val, string(alg), hexPrefix) {
 			continue
 		}
-		if dst.entries[i].alg == alg && dst.entries[i].val == hexPrefix {
+		if entry.alg == alg && entry.val == hexPrefix {
 			// An exact whole-value match is unambiguous.
-			return dst.entries[i].digest, nil
+			return entry.digest, nil
 		}
-		if match != nil {
+		if match != "" {
 			return "", ErrDigestAmbiguous
 		}
-		match = dst.entries[i]
+		match = entry.digest
 	}
-	if match == nil {
+	if match == "" {
 		return "", ErrDigestNotFound
 	}
 
-	return match.digest, nil
+	return match, nil
 }
 
 // Add adds the given digest to the set. An error will be returned
