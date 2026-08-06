@@ -190,39 +190,38 @@ func (dst *Set) All() []digest.Digest {
 func ShortCodeTable(dst *Set, length int) map[digest.Digest]string {
 	dst.mutex.RLock()
 	defer dst.mutex.RUnlock()
-	m := make(map[digest.Digest]string, len(dst.entries))
-	l := length
+	shortCodes := make(map[digest.Digest]string, len(dst.entries))
+	codeLength := length
 	resetIdx := 0
-	for i := 0; i < len(dst.entries); i++ {
-		var short string
-		extended := true
-		for extended {
-			extended = false
-			if len(dst.entries[i].val) <= l {
-				short = dst.entries[i].digest.String()
-			} else {
-				short = dst.entries[i].val[:l]
-				for j := i + 1; j < len(dst.entries); j++ {
-					if strings.HasPrefix(dst.entries[j].val, short) {
-						if j > resetIdx {
-							resetIdx = j
-						}
-						extended = true
-					} else {
-						break
-					}
-				}
-				if extended {
-					l++
-				}
+	for i, entry := range dst.entries {
+		for {
+			if len(entry.val) <= codeLength {
+				shortCodes[entry.digest] = entry.digest.String()
+				break
 			}
+
+			short := entry.val[:codeLength]
+			extended := false
+			for j := i + 1; j < len(dst.entries); j++ {
+				if !strings.HasPrefix(dst.entries[j].val, short) {
+					break
+				}
+				if j > resetIdx {
+					resetIdx = j
+				}
+				extended = true
+			}
+			if !extended {
+				shortCodes[entry.digest] = short
+				break
+			}
+			codeLength++
 		}
-		m[dst.entries[i].digest] = short
 		if i >= resetIdx {
-			l = length
+			codeLength = length
 		}
 	}
-	return m
+	return shortCodes
 }
 
 type digestEntry struct {
