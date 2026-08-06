@@ -69,25 +69,18 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		return "", ErrDigestNotFound
 	}
 	var (
-		idx       int
 		alg       digest.Algorithm
 		hexPrefix string
 	)
 	if dgst, err := digest.Parse(d); errors.Is(err, digest.ErrDigestInvalidFormat) {
 		hexPrefix = d
-		idx = sort.Search(len(dst.entries), func(i int) bool {
-			return dst.entries[i].val >= d
-		})
 	} else {
 		hexPrefix = dgst.Encoded()
 		alg = dgst.Algorithm()
-		idx = sort.Search(len(dst.entries), func(i int) bool {
-			if dst.entries[i].val == hexPrefix {
-				return dst.entries[i].alg >= alg
-			}
-			return dst.entries[i].val >= hexPrefix
-		})
 	}
+	idx := sort.Search(len(dst.entries), func(i int) bool {
+		return dst.entries[i].val >= hexPrefix
+	})
 
 	// Entries whose value have hexPrefix as a prefix form a contiguous run starting
 	// at idx. Digests of a different algorithm may sort within that run, so a
