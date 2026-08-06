@@ -150,12 +150,12 @@ func (dst *Set) Remove(d digest.Digest) error {
 	}
 	dst.mutex.Lock()
 	defer dst.mutex.Unlock()
-	entry := &digestEntry{alg: d.Algorithm(), val: d.Encoded(), digest: d}
+	alg, val := d.Algorithm(), d.Encoded()
 	idx := sort.Search(len(dst.entries), func(i int) bool {
-		if dst.entries[i].val == entry.val {
-			return dst.entries[i].alg >= entry.alg
+		if dst.entries[i].val == val {
+			return dst.entries[i].alg >= alg
 		}
-		return dst.entries[i].val >= entry.val
+		return dst.entries[i].val >= val
 	})
 	// Not found if idx is after or value at idx is not digest
 	if idx == len(dst.entries) || dst.entries[idx].digest != d {
