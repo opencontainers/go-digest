@@ -62,19 +62,7 @@ func NewSet() *Set {
 // rather whether the second value could match against the first
 // value.
 func checkShortMatch(alg digest.Algorithm, hex, shortAlg, shortHex string) bool {
-	if len(hex) == len(shortHex) {
-		if hex != shortHex {
-			return false
-		}
-		if len(shortAlg) > 0 && string(alg) != shortAlg {
-			return false
-		}
-	} else if !strings.HasPrefix(hex, shortHex) {
-		return false
-	} else if len(shortAlg) > 0 && string(alg) != shortAlg {
-		return false
-	}
-	return true
+	return (shortAlg == "" || alg == digest.Algorithm(shortAlg)) && strings.HasPrefix(hex, shortHex)
 }
 
 // Lookup looks for a digest matching the given string representation.
@@ -229,7 +217,7 @@ func ShortCodeTable(dst *Set, length int) map[digest.Digest]string {
 			} else {
 				short = dst.entries[i].val[:l]
 				for j := i + 1; j < len(dst.entries); j++ {
-					if checkShortMatch(dst.entries[j].alg, dst.entries[j].val, "", short) {
+					if strings.HasPrefix(dst.entries[j].val, short) {
 						if j > resetIdx {
 							resetIdx = j
 						}
