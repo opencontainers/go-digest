@@ -46,15 +46,13 @@ var (
 // appropriately long short code should be used.
 type Set struct {
 	mutex   sync.RWMutex
-	entries digestEntries
+	entries []*digestEntry
 }
 
 // NewSet creates an empty set of digests
 // which may have digests added.
 func NewSet() *Set {
-	return &Set{
-		entries: digestEntries{},
-	}
+	return &Set{}
 }
 
 // checkShortMatch checks whether two digests match as either whole
@@ -243,21 +241,4 @@ type digestEntry struct {
 	alg    digest.Algorithm
 	val    string
 	digest digest.Digest
-}
-
-type digestEntries []*digestEntry
-
-func (d digestEntries) Len() int {
-	return len(d)
-}
-
-func (d digestEntries) Less(i, j int) bool {
-	if d[i].val != d[j].val {
-		return d[i].val < d[j].val
-	}
-	return d[i].alg < d[j].alg
-}
-
-func (d digestEntries) Swap(i, j int) {
-	d[i], d[j] = d[j], d[i]
 }

@@ -268,7 +268,7 @@ func benchAddNTable(b *testing.B, n int) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dset := &Set{entries: digestEntries(make([]*digestEntry, 0, n))}
+		dset := &Set{entries: make([]*digestEntry, 0, n)}
 		for j := range digests {
 			if err = dset.Add(digests[j]); err != nil {
 				b.Fatal(err)
@@ -283,7 +283,7 @@ func benchLookupNTable(b *testing.B, n int, shortLen int) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	dset := &Set{entries: digestEntries(make([]*digestEntry, 0, n))}
+	dset := &Set{entries: make([]*digestEntry, 0, n)}
 	for i := range digests {
 		if err := dset.Add(digests[i]); err != nil {
 			b.Fatal(err)
@@ -310,7 +310,7 @@ func benchRemoveNTable(b *testing.B, n int) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dset := &Set{entries: digestEntries(make([]*digestEntry, 0, n))}
+		dset := &Set{entries: make([]*digestEntry, 0, n)}
 		b.StopTimer()
 		for j := range digests {
 			if err = dset.Add(digests[j]); err != nil {
@@ -332,7 +332,7 @@ func benchShortCodeNTable(b *testing.B, n int, shortLen int) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	dset := &Set{entries: digestEntries(make([]*digestEntry, 0, n))}
+	dset := &Set{entries: make([]*digestEntry, 0, n)}
 	for i := range digests {
 		if err := dset.Add(digests[i]); err != nil {
 			b.Fatal(err)
