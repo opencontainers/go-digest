@@ -58,10 +58,15 @@ func NewSet() *Set {
 	return &Set{}
 }
 
-// Lookup looks for a digest matching the given string representation.
-// If no digests could be found ErrDigestNotFound will be returned
-// with an empty digest value. If multiple matches are found
-// ErrDigestAmbiguous will be returned with an empty digest value.
+// Lookup looks for a digest matching d.
+//
+// d may be a full digest, such as "sha256:abcdef...", an encoded-value prefix,
+// such as "abcdef", or an algorithm-qualified encoded-value prefix, such as
+// "sha256:abcdef". An exact full-digest match takes precedence over other
+// prefix matches.
+//
+// If no digest matches, Lookup returns [ErrDigestNotFound]. If multiple prefix
+// matches are found, Lookup returns [ErrDigestAmbiguous].
 func (dst *Set) Lookup(d string) (digest.Digest, error) {
 	dst.mutex.RLock()
 	defer dst.mutex.RUnlock()
@@ -73,8 +78,12 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		hexPrefix string
 	)
 	if dgst, err := digest.Parse(d); errors.Is(err, digest.ErrDigestInvalidFormat) {
+		// An input without a valid algorithm separator is treated as an
+		// unqualified encoded-value prefix.
 		hexPrefix = d
 	} else {
+		// digest.Parse still returns the parsed algorithm and encoded value for
+		// qualified short digests, together with digest.ErrDigestInvalidLength.
 		hexPrefix = dgst.Encoded()
 		alg = dgst.Algorithm()
 	}
@@ -82,10 +91,9 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		return dst.entries[i].val >= hexPrefix
 	})
 
-	// Entries whose value have hexPrefix as a prefix form a contiguous run starting
-	// at idx. Digests of a different algorithm may sort within that run, so a
-	// second matching entry is not necessarily adjacent to the first; scan the
-	// whole run instead of only inspecting idx and idx+1.
+	// Entries whose values start with hexPrefix form a contiguous range beginning
+	// at idx. Entries for other algorithms may appear between matching entries,
+	// so scan the entire prefix range rather than only idx and idx+1.
 	var match digest.Digest
 	for _, entry := range dst.entries[idx:] {
 		if !strings.HasPrefix(entry.val, hexPrefix) {
@@ -170,7 +178,7 @@ func (dst *Set) Remove(d digest.Digest) error {
 	return nil
 }
 
-// All returns all the digests in the set
+// All returns a copy of all digests in the set.
 func (dst *Set) All() []digest.Digest {
 	dst.mutex.RLock()
 	defer dst.mutex.RUnlock()
@@ -182,11 +190,11 @@ func (dst *Set) All() []digest.Digest {
 	return retValues
 }
 
-// ShortCodeTable returns a map of Digest to unique short codes. The
-// length represents the minimum value, the maximum length may be the
-// entire value of digest if uniqueness cannot be achieved without the
-// full value. This function will attempt to make short codes as short
-// as possible to be unique.
+// ShortCodeTable returns the shortest unique code for each digest in dst.
+//
+// Codes are at least length characters long. A code may be extended up to the
+// digest's full string representation when its encoded value is not unique at
+// a shorter length.
 func ShortCodeTable(dst *Set, length int) map[digest.Digest]string {
 	dst.mutex.RLock()
 	defer dst.mutex.RUnlock()
