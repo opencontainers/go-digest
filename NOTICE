@@ -1,0 +1,12 @@
+opencontainers/go-digest
+
+Copyright The OCI Contributors.
+Copyright 2016 Docker, Inc.
+
+Source code is licensed under the Apache License, Version 2.0.
+See LICENSE for details.
+
+Documentation files, including README.md and CONTRIBUTING.md,
+are licensed under the Creative Commons Attribution-ShareAlike
+4.0 International License (CC BY-SA 4.0). See LICENSE.docs
+for details.
