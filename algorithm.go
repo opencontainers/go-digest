@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"regexp"
 	"sync"
 )
 
@@ -101,7 +100,26 @@ const (
 	BLAKE3 Algorithm = "blake3"
 )
 
-var algorithmRegexp = regexp.MustCompile(`^[a-z0-9]+([+._-][a-z0-9]+)*$`)
+// validAlgorithmName reports whether name matches the regular expression
+// "^[a-z0-9]+([+._-][a-z0-9]+)*$", as required by the OCI image-spec.
+// A regular expression would be costly to compile at init time.
+func validAlgorithmName(name string) bool {
+	afterSeparator := true
+	for i := 0; i < len(name); i++ {
+		switch c := name[i]; {
+		case 'a' <= c && c <= 'z', '0' <= c && c <= '9':
+			afterSeparator = false
+		case c == '+', c == '.', c == '_', c == '-':
+			if afterSeparator {
+				return false
+			}
+			afterSeparator = true
+		default:
+			return false
+		}
+	}
+	return !afterSeparator
+}
 
 // CryptoHash is the interface that any hash algorithm must implement
 type CryptoHash interface {
@@ -121,11 +139,7 @@ var (
 	// See: RegisterAlgorithm
 	algorithms = map[Algorithm]CryptoHash{}
 
-	// anchoredEncodedRegexps contains anchored regular expressions for hex-encoded digests.
-	// Note that /A-F/ disallowed.
-	anchoredEncodedRegexps = map[Algorithm]*regexp.Regexp{}
-
-	// algorithmsLock protects algorithms, and anchoredEncodedRegexps
+	// algorithmsLock protects [algorithms].
 	algorithmsLock sync.RWMutex
 )
 
@@ -145,22 +159,25 @@ func RegisterAlgorithm(algorithm Algorithm, implementation CryptoHash) bool {
 		return false
 	}
 
-	if !algorithmRegexp.MatchString(string(algorithm)) {
+	if !validAlgorithmName(string(algorithm)) {
 		panic(fmt.Sprintf("Algorithm %s has a name which does not fit within the allowed grammar", algorithm))
 	}
 
 	algorithms[algorithm] = implementation
-	// We can do this since the Digest function below only implements a hex digest. If we open this in the future
-	// we need to allow for alternative digest algorithms to be implemented and for the user to pass their own
-	// custom regexp.
-	anchoredEncodedRegexps[algorithm] = hexDigestRegex(implementation)
 	return true
 }
 
-// hexDigestRegex can be used to generate a regex for RegisterAlgorithm.
-func hexDigestRegex(cryptoHash CryptoHash) *regexp.Regexp {
-	hexDigestBytes := cryptoHash.Size() * 2
-	return regexp.MustCompile(fmt.Sprintf("^[a-f0-9]{%d}$", hexDigestBytes))
+// isLowerHex reports whether s only contains lowercase hexadecimal digits.
+// Note that /A-F/ is disallowed.
+func isLowerHex(s string) bool {
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; {
+		case '0' <= c && c <= '9', 'a' <= c && c <= 'f':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // Available returns true if the digest type is available for use. If this
@@ -290,16 +307,19 @@ func (a Algorithm) Validate(encoded string) error {
 	algorithmsLock.RLock()
 	defer algorithmsLock.RUnlock()
 
-	r, ok := anchoredEncodedRegexps[a]
+	h, ok := algorithms[a]
 	if !ok {
 		return ErrDigestUnsupported
 	}
 	// Digests much always be hex-encoded, ensuring that their hex portion will
 	// always be size*2
-	if a.Size()*2 != len(encoded) {
+	if h.Size()*2 != len(encoded) {
 		return ErrDigestInvalidLength
 	}
-	if r.MatchString(encoded) {
+	// We can do this since [Algorithm.Encode] only implements a hex digest.
+	// If we open this in the future we need to allow for alternative digest
+	// algorithms to be implemented and for the user to pass their own format.
+	if isLowerHex(encoded) {
 		return nil
 	}
 	return ErrDigestInvalidFormat
