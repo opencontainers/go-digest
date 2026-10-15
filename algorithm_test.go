@@ -138,6 +138,10 @@ func TestBadAlgorithmNameRegistration(t *testing.T) {
 	expectPanic("-")
 	expectPanic("SHA256")
 	expectPanic("sha25*")
+	expectPanic("")
+	expectPanic("+sha256")
+	expectPanic("sha256..test")
+	expectPanic("sha256 ")
 }
 
 func TestGoodAlgorithmNameRegistration(t *testing.T) {
@@ -155,4 +159,6 @@ func TestGoodAlgorithmNameRegistration(t *testing.T) {
 
 	expectNoPanic("sha256-test")
 	expectNoPanic("sha256_384")
+	expectNoPanic("s")
+	expectNoPanic("0sha+256.test_a-b")
 }

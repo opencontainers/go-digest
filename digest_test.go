@@ -141,3 +141,15 @@ func BenchmarkNewDigestFromBytes(b *testing.B) {
 		_ = digest.NewDigestFromBytes("sha256", s[:])
 	}
 }
+
+func BenchmarkValidate(b *testing.B) {
+	d := digest.Digest("sha256:e58fcf7418d4390dec8e8fb69d88c06ec07039d651fedd3aa72af9972e7d046b")
+
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		if err := d.Validate(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
