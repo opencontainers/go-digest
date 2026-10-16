@@ -35,52 +35,38 @@ var (
 	ErrDigestAmbiguous = errors.New("ambiguous digest string")
 )
 
-// Set is used to hold a unique set of digests which
-// may be easily referenced by easily  referenced by a string
-// representation of the digest as well as short representation.
-// The uniqueness of the short representation is based on other
-// digests in the set. If digests are omitted from this set,
-// collisions in a larger set may not be detected, therefore it
-// is important to always do short representation lookups on
-// the complete set of digests. To mitigate collisions, an
-// appropriately long short code should be used.
+// Set holds a unique set of digests that may be referenced by their full or
+// shortened string representation.
+//
+// The uniqueness of a shortened representation depends on the other digests
+// in the set. If digests are omitted, collisions in a larger set may not be
+// detected. Short representation lookups should therefore always use the
+// complete set of digests and an appropriately long short code.
+//
+// The zero value of Set is ready for use.
 type Set struct {
 	mutex   sync.RWMutex
-	entries digestEntries
+	entries []*digestEntry
 }
 
 // NewSet creates an empty set of digests
 // which may have digests added.
+//
+// In most cases, new([Set]) (or just declaring a [Set] variable) is
+// sufficient to initialize a [Set].
 func NewSet() *Set {
-	return &Set{
-		entries: digestEntries{},
-	}
+	return &Set{}
 }
 
-// checkShortMatch checks whether two digests match as either whole
-// values or short values. This function does not test equality,
-// rather whether the second value could match against the first
-// value.
-func checkShortMatch(alg digest.Algorithm, hex, shortAlg, shortHex string) bool {
-	if len(hex) == len(shortHex) {
-		if hex != shortHex {
-			return false
-		}
-		if len(shortAlg) > 0 && string(alg) != shortAlg {
-			return false
-		}
-	} else if !strings.HasPrefix(hex, shortHex) {
-		return false
-	} else if len(shortAlg) > 0 && string(alg) != shortAlg {
-		return false
-	}
-	return true
-}
-
-// Lookup looks for a digest matching the given string representation.
-// If no digests could be found ErrDigestNotFound will be returned
-// with an empty digest value. If multiple matches are found
-// ErrDigestAmbiguous will be returned with an empty digest value.
+// Lookup looks for a digest matching d.
+//
+// d may be a full digest, such as "sha256:abcdef...", an encoded-value prefix,
+// such as "abcdef", or an algorithm-qualified encoded-value prefix, such as
+// "sha256:abcdef". An exact full-digest match takes precedence over other
+// prefix matches.
+//
+// If no digest matches, Lookup returns [ErrDigestNotFound]. If multiple prefix
+// matches are found, Lookup returns [ErrDigestAmbiguous].
 func (dst *Set) Lookup(d string) (digest.Digest, error) {
 	dst.mutex.RLock()
 	defer dst.mutex.RUnlock()
@@ -88,51 +74,49 @@ func (dst *Set) Lookup(d string) (digest.Digest, error) {
 		return "", ErrDigestNotFound
 	}
 	var (
-		searchFunc func(int) bool
-		alg        digest.Algorithm
-		hex        string
+		alg       digest.Algorithm
+		hexPrefix string
 	)
-	dgst, err := digest.Parse(d)
-	if errors.Is(err, digest.ErrDigestInvalidFormat) {
-		hex = d
-		searchFunc = func(i int) bool {
-			return dst.entries[i].val >= d
-		}
+	if dgst, err := digest.Parse(d); errors.Is(err, digest.ErrDigestInvalidFormat) {
+		// An input without a valid algorithm separator is treated as an
+		// unqualified encoded-value prefix.
+		hexPrefix = d
 	} else {
-		hex = dgst.Encoded()
+		// digest.Parse still returns the parsed algorithm and encoded value for
+		// qualified short digests, together with digest.ErrDigestInvalidLength.
+		hexPrefix = dgst.Encoded()
 		alg = dgst.Algorithm()
-		searchFunc = func(i int) bool {
-			if dst.entries[i].val == hex {
-				return dst.entries[i].alg >= alg
-			}
-			return dst.entries[i].val >= hex
-		}
 	}
-	idx := sort.Search(len(dst.entries), searchFunc)
+	idx := sort.Search(len(dst.entries), func(i int) bool {
+		return dst.entries[i].val >= hexPrefix
+	})
 
-	// Entries whose value has hex as a prefix form a contiguous run starting
-	// at idx. Digests of a different algorithm may sort within that run, so a
-	// second matching entry is not necessarily adjacent to the first; scan the
-	// whole run instead of only inspecting idx and idx+1.
-	var match *digestEntry
-	for i := idx; i < len(dst.entries) && strings.HasPrefix(dst.entries[i].val, hex); i++ {
-		if !checkShortMatch(dst.entries[i].alg, dst.entries[i].val, string(alg), hex) {
+	// Entries whose values start with hexPrefix form a contiguous range beginning
+	// at idx. Entries for other algorithms may appear between matching entries,
+	// so scan the entire prefix range rather than only idx and idx+1.
+	var match digest.Digest
+	for _, entry := range dst.entries[idx:] {
+		if !strings.HasPrefix(entry.val, hexPrefix) {
+			break
+		}
+		if alg != "" && entry.alg != alg {
+			// Non-matching algorithm.
 			continue
 		}
-		if dst.entries[i].alg == alg && dst.entries[i].val == hex {
-			// An exact whole-value match is unambiguous.
-			return dst.entries[i].digest, nil
+		if entry.val == hexPrefix {
+			// An exact encoded-value match is unambiguous.
+			return entry.digest, nil
 		}
-		if match != nil {
+		if match != "" {
 			return "", ErrDigestAmbiguous
 		}
-		match = dst.entries[i]
+		match = entry.digest
 	}
-	if match == nil {
+	if match == "" {
 		return "", ErrDigestNotFound
 	}
 
-	return match.digest, nil
+	return match, nil
 }
 
 // Add adds the given digest to the set. An error will be returned
@@ -145,13 +129,12 @@ func (dst *Set) Add(d digest.Digest) error {
 	dst.mutex.Lock()
 	defer dst.mutex.Unlock()
 	entry := &digestEntry{alg: d.Algorithm(), val: d.Encoded(), digest: d}
-	searchFunc := func(i int) bool {
+	idx := sort.Search(len(dst.entries), func(i int) bool {
 		if dst.entries[i].val == entry.val {
 			return dst.entries[i].alg >= entry.alg
 		}
 		return dst.entries[i].val >= entry.val
-	}
-	idx := sort.Search(len(dst.entries), searchFunc)
+	})
 	if idx == len(dst.entries) {
 		dst.entries = append(dst.entries, entry)
 		return nil
@@ -175,14 +158,13 @@ func (dst *Set) Remove(d digest.Digest) error {
 	}
 	dst.mutex.Lock()
 	defer dst.mutex.Unlock()
-	entry := &digestEntry{alg: d.Algorithm(), val: d.Encoded(), digest: d}
-	searchFunc := func(i int) bool {
-		if dst.entries[i].val == entry.val {
-			return dst.entries[i].alg >= entry.alg
+	alg, val := d.Algorithm(), d.Encoded()
+	idx := sort.Search(len(dst.entries), func(i int) bool {
+		if dst.entries[i].val == val {
+			return dst.entries[i].alg >= alg
 		}
-		return dst.entries[i].val >= entry.val
-	}
-	idx := sort.Search(len(dst.entries), searchFunc)
+		return dst.entries[i].val >= val
+	})
 	// Not found if idx is after or value at idx is not digest
 	if idx == len(dst.entries) || dst.entries[idx].digest != d {
 		return nil
@@ -196,7 +178,7 @@ func (dst *Set) Remove(d digest.Digest) error {
 	return nil
 }
 
-// All returns all the digests in the set
+// All returns a copy of all digests in the set.
 func (dst *Set) All() []digest.Digest {
 	dst.mutex.RLock()
 	defer dst.mutex.RUnlock()
@@ -208,68 +190,50 @@ func (dst *Set) All() []digest.Digest {
 	return retValues
 }
 
-// ShortCodeTable returns a map of Digest to unique short codes. The
-// length represents the minimum value, the maximum length may be the
-// entire value of digest if uniqueness cannot be achieved without the
-// full value. This function will attempt to make short codes as short
-// as possible to be unique.
+// ShortCodeTable returns the shortest unique code for each digest in dst.
+//
+// Codes are at least length characters long. A code may be extended up to the
+// digest's full string representation when its encoded value is not unique at
+// a shorter length.
 func ShortCodeTable(dst *Set, length int) map[digest.Digest]string {
 	dst.mutex.RLock()
 	defer dst.mutex.RUnlock()
-	m := make(map[digest.Digest]string, len(dst.entries))
-	l := length
+	shortCodes := make(map[digest.Digest]string, len(dst.entries))
+	codeLength := length
 	resetIdx := 0
-	for i := 0; i < len(dst.entries); i++ {
-		var short string
-		extended := true
-		for extended {
-			extended = false
-			if len(dst.entries[i].val) <= l {
-				short = dst.entries[i].digest.String()
-			} else {
-				short = dst.entries[i].val[:l]
-				for j := i + 1; j < len(dst.entries); j++ {
-					if checkShortMatch(dst.entries[j].alg, dst.entries[j].val, "", short) {
-						if j > resetIdx {
-							resetIdx = j
-						}
-						extended = true
-					} else {
-						break
-					}
-				}
-				if extended {
-					l++
-				}
+	for i, entry := range dst.entries {
+		for {
+			if len(entry.val) <= codeLength {
+				shortCodes[entry.digest] = entry.digest.String()
+				break
 			}
+
+			short := entry.val[:codeLength]
+			extended := false
+			for j := i + 1; j < len(dst.entries); j++ {
+				if !strings.HasPrefix(dst.entries[j].val, short) {
+					break
+				}
+				if j > resetIdx {
+					resetIdx = j
+				}
+				extended = true
+			}
+			if !extended {
+				shortCodes[entry.digest] = short
+				break
+			}
+			codeLength++
 		}
-		m[dst.entries[i].digest] = short
 		if i >= resetIdx {
-			l = length
+			codeLength = length
 		}
 	}
-	return m
+	return shortCodes
 }
 
 type digestEntry struct {
 	alg    digest.Algorithm
 	val    string
 	digest digest.Digest
-}
-
-type digestEntries []*digestEntry
-
-func (d digestEntries) Len() int {
-	return len(d)
-}
-
-func (d digestEntries) Less(i, j int) bool {
-	if d[i].val != d[j].val {
-		return d[i].val < d[j].val
-	}
-	return d[i].alg < d[j].alg
-}
-
-func (d digestEntries) Swap(i, j int) {
-	d[i], d[j] = d[j], d[i]
 }
